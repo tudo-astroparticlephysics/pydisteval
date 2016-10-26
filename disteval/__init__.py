@@ -2,10 +2,15 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from sklearn.model_selection import StratifiedKFold
+try:
+    from sklearn.model_selection import StratifiedKFold
+    old_kfold = False 
+except ImportError:
+    from sklearn.cross_validation import StratifiedKFold
+    old_kfold = True
 from sklearn.metrics import roc_curve, auc
 
-from scripts.preparation import prepare_data, ClassifierCharacteristics
+from .scripts.preparation import prepare_data, ClassifierCharacteristics
 
 __author__ = "Mathis Börner and Jens Buß"
 
@@ -53,8 +58,8 @@ def roc_mismatch(test_df,
     ???
     """
     desired_characteristics = ClassifierCharacteristics()
-    desired_characteristics.opts['callable_fit'] = True
-    desired_characteristics.opts['callable_predict_proba'] = True
+    desired_characteristics.opts['callable:fit'] = True
+    desired_characteristics.opts['callable:predict_proba'] = True
     clf_characteristics = ClassifierCharacteristics(clf)
     assert clf_characteristics.fulfilling(desired_characteristics), \
         'Classifier sanity check failed!'
@@ -63,13 +68,18 @@ def roc_mismatch(test_df,
                                             test_weight=None,
                                             ref_weight=None,
                                             test_ref_ratio=1.)
-    strat_kfold = StratifiedKFold(n_splits=cv_steps,
-                                  shuffle=True)
 
+    if old_kfold:
+        cv_iterator = StratifiedKFold(y, n_folds=cv_steps,
+                                      shuffle=True)
+    else:
+        strat_kfold = StratifiedKFold(n_splits=cv_steps,
+                                      shuffle=True)
+        cv_iterator = strat_kfold.split(X, y)
     y_pred = np.zeros_like(y, dtype=float)
     roc_curves = []
 
-    for train_idx, test_idx in strat_kfold.split(X, y):
+    for train_idx, test_idx in cv_iterator:
         X_train = X[train_idx]
         X_test = X[test_idx]
         y_train = y[train_idx]

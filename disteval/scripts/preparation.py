@@ -107,7 +107,6 @@ def prepare_data(test_df,
     # Remove NaNs and INFs from the arrays and warn the user about them
     isfinite_test = np.isfinite(X_test)
     selected = np.sum(isfinite_test, axis=1) == len(obs)
-    print(selected)
     n_selected = np.sum(selected)
     if n_selected < X_test.shape[0]:
         n_removed = X_test.shape[0] - n_selected
@@ -157,8 +156,8 @@ def prepare_data(test_df,
             seleceted = np.random.uniform(size=X_test.shape[0]) <= probability
             X_test = X_test[seleceted, :]
             y_test = y_test[seleceted]
-        elif n_rows_test / n_rows_ref > test_ref_ratio:
-            probability = n_rows_ref / (n_rows_test * test_ref_ratio)
+        elif n_rows_test / n_rows_ref <= test_ref_ratio:
+            probability = (n_rows_test * test_ref_ratio) / n_rows_ref
             seleceted = np.random.uniform(size=y_ref.shape[0]) <= probability
             X_ref = X_ref[seleceted, :]
             y_ref = y_ref[seleceted]
