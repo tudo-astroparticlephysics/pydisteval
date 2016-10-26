@@ -4,6 +4,7 @@
 __author__ = "Mathis Börner and Jens Buss"
 
 from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import roc_curve, auc
 
 from scripts.preparation import prepare_data, ClassifierCharacteristics
 
@@ -63,6 +64,26 @@ def roc_mismatch(test_df,
                                             test_ref_ratio=1.)
     strat_kfold = StratifiedKFold(n_splits=cv_steps,
                                   shuffle=True)
+
+    roc_curves = []
+
     for train_idx, test_idx in skf.split(X, y):
+        X_train = X[train_idx]
+        X_test = X[test_idx]
+        y_train = y[train_idx]
+        y_test = y[test_idx]
 
+        if sample_weight is None:
+            sample_weight_train = None
+            sample_weight_test = None
+        else:
+            sample_weight_train = sample_weight[train_idx]
+            sample_weight_test = sample_weight[test_idx]
+        clf = clf.fit(X_train, y_train, sample_weight_train)
+        y_pred_test = = clf.predict_proba(X_test)[:, 1]
+        roc_curves.append(roc_curve(y_train, y_pred_test))
+        y_pred[test_idx] = y_pred_test
 
+    auc_values = [auc(fpr, tpr) for fpr, tpr, _ in roc_curves]
+
+    print('AUC: %.3f +/- %.3f' % (np.mean(auc_values), np.std(auc_values)))
