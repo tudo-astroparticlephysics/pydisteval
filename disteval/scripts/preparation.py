@@ -64,7 +64,7 @@ def prepare_data(test_df,
         else:
             # convert to float32 numpy array for sklearn
             sample_weight_test = np.array(test_df.loc[:, test_weight].values,
-                                         dtype=np.float32)
+                                          dtype=np.float32)
     elif test_weight is not None:
         # If ref uses weights, dummy weights are created
         sample_weight_test = np.ones(len(test_obs), dtype=np.float32)
@@ -94,7 +94,7 @@ def prepare_data(test_df,
         msg += ' will be ignored'
         warnings.warn(msg)
 
-    obs = set.intersection(mc_obs, data_obs)
+    obs = set.intersection(test_obs, ref_obs)
     # Convert the dataframes to float32 numpy arrays, so they can be
     # used by sklearn
     test_df = test_df.loc[:, obs]
@@ -113,7 +113,7 @@ def prepare_data(test_df,
         n_removed = X_test.shape[0] - n_selected
         warnings.warn('%d NaNs removed from the test data' % n_removed)
     X_test = X_test[selected, :]
-    y_test =  y_test[selected]
+    y_test = y_test[selected]
     if use_weights:
         sample_weight_test = sample_weight_test[selected, :]
 
@@ -124,7 +124,7 @@ def prepare_data(test_df,
         n_removed = X_ref.shape[0] - n_selected
         warnings.warn('%d NaNs removed from the ref data' % n_removed)
     X_ref = X_ref[selected, :]
-    y_ref =  y_ref[selected]
+    y_ref = y_ref[selected]
     if use_weights:
         sample_weight_ref = sample_weight_ref[selected, :]
 
@@ -225,12 +225,12 @@ class ClassifierCharacteristics(object):
             Boolean whether the asked for characteristic is present"""
         if key.startswith('callable:'):
             desired_callable = key.replace('callable:', '')
-            if hasattr(clf, desired_callable):
-                if callable(getattr(clf, desired_callable)):
+            if hasattr(self.clf, desired_callable):
+                if callable(getattr(self.clf, desired_callable)):
                     return True
         elif key.startswith('has:'):
             desired_attribute = key.replace('has:', '')
-            if hasattr(clf, desired_attribute):
+            if hasattr(self.clf, desired_attribute):
                 return True
         else:
             print(key)
@@ -270,13 +270,13 @@ class ClassifierCharacteristics(object):
                           if v is not None]
         for key in check_keys:
             if key not in self.opts.keys():
-                if hasattr(self, clf):
+                if hasattr(self, 'clf'):
                     value = self.__evalute_clf__(key)
                     self.opts[key] = value
                 else:
                     raise KeyError('%s not set for the comparison partner')
             if key not in second_instance.opts.keys():
-                if hasattr(second_instance, clf):
+                if hasattr(second_instance, 'clf'):
                     value = second_instance.__evalute_clf__(key)
                     second_instance.opts[key] = value
                 else:

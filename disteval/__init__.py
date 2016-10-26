@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python
-__author__ = "Mathis Börner and Jens Buss"
+import numpy as np
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc
 
 from scripts.preparation import prepare_data, ClassifierCharacteristics
+
+__author__ = "Mathis Börner and Jens Buß"
 
 
 def main():
@@ -65,14 +66,14 @@ def roc_mismatch(test_df,
     strat_kfold = StratifiedKFold(n_splits=cv_steps,
                                   shuffle=True)
 
+    y_pred = np.zeros_like(y, dtype=float)
     roc_curves = []
 
-    for train_idx, test_idx in skf.split(X, y):
+    for train_idx, test_idx in strat_kfold.split(X, y):
         X_train = X[train_idx]
         X_test = X[test_idx]
         y_train = y[train_idx]
         y_test = y[test_idx]
-
         if sample_weight is None:
             sample_weight_train = None
             sample_weight_test = None
@@ -80,8 +81,9 @@ def roc_mismatch(test_df,
             sample_weight_train = sample_weight[train_idx]
             sample_weight_test = sample_weight[test_idx]
         clf = clf.fit(X_train, y_train, sample_weight_train)
-        y_pred_test = = clf.predict_proba(X_test)[:, 1]
-        roc_curves.append(roc_curve(y_train, y_pred_test))
+        y_pred_test = clf.predict_proba(X_test)[:, 1]
+        roc_curves.append(roc_curve(y_test, y_pred_test,
+                                    sample_weight=sample_weight_test))
         y_pred[test_idx] = y_pred_test
 
     auc_values = [auc(fpr, tpr) for fpr, tpr, _ in roc_curves]
