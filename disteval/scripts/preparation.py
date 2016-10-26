@@ -50,8 +50,10 @@ def prepare_data(test_df,
     obs : list[str]
         List of the names of the columns of X
     """
+    # make the dataframe homogenious
     test_obs = set(test_df.columns)
     ref_obs = set(ref_df.columns)
+    # Check if weights are used
     use_weights = False
     if test_weight is not None:
         use_weights = True
@@ -60,9 +62,11 @@ def prepare_data(test_df,
         except KeyError:
             raise KeyError('Weight \'%s\' not in test dataframe')
         else:
+            # convert to float32 numpy array for sklearn
             sample_weight_test = np.array(test_df.loc[:, test_weight].values,
                                          dtype=np.float32)
     elif test_weight is not None:
+        # If ref uses weights, dummy weights are created
         sample_weight_test = np.ones(len(test_obs), dtype=np.float32)
     if ref_weight is not None:
         use_weights = True
@@ -71,12 +75,15 @@ def prepare_data(test_df,
         except KeyError:
             raise KeyError('Weight \'%s\' not in reference dataframe')
         else:
+            # convert to float32 numpy array for sklearn
             sample_weight_ref = np.array(ref_df.loc[:, ref_weight].values,
                                          dtype=np.float32)
     elif test_weight is not None:
+        # If test uses weights, dummy weights are created
         sample_weight_ref = np.ones(len(ref_df), dtype=np.float32)
 
     if len(set.difference(ref_obs, test_obs)) > 0:
+        # This sections warns the user about differences between the datasets
         unique_obs_test = test_obs.difference(ref_obs)
         unique_obs_ref = test_obs.difference(ref_obs)
         msg = 'Dataset are not consistent: '
@@ -87,9 +94,9 @@ def prepare_data(test_df,
         msg += ' will be ignored'
         warnings.warn(msg)
 
-
     obs = set.intersection(mc_obs, data_obs)
-
+    # Convert the dataframes to float32 numpy arrays, so they can be
+    # used by sklearn
     test_df = test_df.loc[:, obs]
     ref_df = ref_df.loc[:, obs]
     X_test = np.array(test_df.loc[:, obs].values, dtype=np.float32)
@@ -97,6 +104,7 @@ def prepare_data(test_df,
     y_test = np.zeros(X_test.shape[0], dtype=int)
     y_ref = np.ones(X_ref.shape[0], dtype=int)
 
+    # Remove NaNs and INFs from the arrays and warn the user about them
     isfinite_test = np.isfinite(X_test)
     selected = np.sum(isfinite_test, axis=1) == len(obs)
     print(selected)
@@ -120,7 +128,9 @@ def prepare_data(test_df,
     if use_weights:
         sample_weight_ref = sample_weight_ref[selected, :]
 
+    # In this section the desired test/ref ratio si realized
     if use_weights:
+        # If weights are used, the ratio is the ratio of sum of weights
         sum_w_test = np.sum(sample_weight_test)
         sum_w_ref = np.sum(sample_weight_ref)
         if sum_w_test / sum_w_ref > test_ref_ratio:
@@ -139,6 +149,7 @@ def prepare_data(test_df,
         y = np.hstack((y_test, y_ref))
         sample_weight = np.vstack((sample_weight_test, sample_weight_ref))
     else:
+        # Without weights the ratio is the number of samples in the datasets
         n_rows_test = len(y_test)
         n_rows_ref = len(y_ref)
         if n_rows_test / n_rows_ref > test_ref_ratio:
