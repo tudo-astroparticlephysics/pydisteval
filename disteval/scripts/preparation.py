@@ -3,7 +3,6 @@
 import warnings
 
 import numpy as np
-import pandas as pd
 
 
 def prepare_data(test_df,
@@ -156,3 +155,59 @@ def prepare_data(test_df,
         y = np.hstack((y_test, y_ref))
         sample_weight = None
     return X, y, sample_weight, obs
+
+
+class ClassifierCharacteristics(object):
+    """Class to define and compare Characteristics of classifier.
+    The core of the Class is the dict ops containing keys whether
+    attributes or functions are required/forbidden. Keys like
+    'callable_fit' are True if the classifier has a callable function
+    'fit'. Keys like 'has_feature_importance' are True if the classifier
+    has an atribute 'feature_importance'.
+    True in the dict means function/attribute is needed or present.
+    False means function/attribute is forbidden or not present.
+    None in the dict means is ignore in the evaluation
+
+    Parameters
+    ----------
+    clf: None or object
+        If None the dict is initiated with None for all keys.
+        If clf is provided the dict is contains only True and False
+        depending on the clf characteristics
+
+    Attributes
+    ----------
+    opts : dict
+        Dictionary containing all the needed/desired characteristics."""
+    def __init__(self, clf=None):
+        self.opts = {
+            'callable_fit': None,
+            'callable_predict': None,
+            'callable_predict_proba': None,
+            'callable_decision_function': None,
+            'has_feature_importance': None}
+        if clf is not None:
+            for key in self.opts.keys():
+                self.opts[key] = False
+                if key.startswith('callable_'):
+                    desired_callable = key.replace('callable_', '')
+                    if hasattr(clf, desired_callable):
+                        if callable(clf.desired_callable):
+                            self.opts[key] = True
+                if key.startswith('has_'):
+                    desired_attribute = key.replace('has_', '')
+                    if hasattr(clf, desired_callable):
+                        self.opts[key] = True
+
+    def __eq__(self, second_instance):
+        check_keys = [k for k, v in second_instance.opts.items()
+                      if v is not None]
+        for key in check_keys:
+            if self.opts[key] != second_instance.opts[key]:
+                if self.opts[k]:
+                    msg = 'Provided classifier has %s' % key
+                else:
+                    msg = 'Provided classifier is missing %s' % key
+                raise AttributeError(msg)
+        return True
+
