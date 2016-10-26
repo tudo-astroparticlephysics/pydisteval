@@ -54,8 +54,7 @@ def roc_mismatch(test_df,
     desired_characteristics.opts['callable_fit'] = True
     desired_characteristics.opts['callable_predict_proba'] = True
     clf_characteristics = ClassifierCharacteristics(clf)
-
-    assert ClassifierCharacteristics(clf) == desired_characteristics, \
+    assert clf_characteristics.fulfilling(desired_characteristics), \
         'Classifier sanity check failed!'
     X, y, sample_weight, obs = prepare_data(test_df,
                                             ref_df,
