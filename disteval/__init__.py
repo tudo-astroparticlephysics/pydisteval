@@ -11,7 +11,7 @@ except ImportError:
 from sklearn.metrics import roc_curve, auc
 
 from .scripts.classifier_characteristics import ClassifierCharacteristics
-from .script.preparation import prepare_data
+from .scripts.preparation import prepare_data
 
 __author__ = "Mathis Börner and Jens Buß"
 
@@ -21,40 +21,48 @@ def main():
     print("Call your main application code here")
 
 
-def roc_mismatch(clf,
+def cv_test_ref_classification(clf,
                  X,
                  y,
                  sample_weight=None,
                  cv_steps=10):
     """Runs a classification betwenn the test data and the reference data.
-    For this classification the ROC-Curve  is analysed to check if the
-    classifier is sensitive for potential mismathces.
-    The hypothesis for the analyse is that the test data has the same
-    distribtuion as the reference data.
+    This classification is run in a cross-validation with a provided
+    classifier. The classifier needs a fit function to start the model
+    building process and a predict_func to obtain the classifier score.
+    The score is expected to be between 0 and 1.
 
     Parameters
     ----------
-    test_df : pandas.Dataframe, shape=(n_samples_mc, features)
-        Dataframe of the test data
+    clf: object
+        Classifier that should be used for the classification.
+        It needs a fit and a predict_proba function.
 
-    ref_df : pandas.Dataframe, shape=(n_samples_mc, features)
-        Dataframe of the reference data
+    X : numpy.float32array, shape=(n_samples, n_obs)
+        Values describing the samples.
 
-    test_weight : str or None, optional (default=None)
-        Name of the columns containing the sample weight of the test
-        data. If None no weights will be used.
+    y : numpy.float32array, shape=(n_samples)
+        Array of the true labels.
 
-    ref_weight : str or None, optional (default=None)
-        Name of the columns containing the sample weight of the
-        reference data. If None no weights will be used.
+    sample_weight : None or numpy.float32array, shape=(n_samples)
+        If weights are used this has to contains the sample weights.
+        None in the case of no weights.
 
-    test_ref_ratio: float, optional (default=1.)
-        Ratio of test and train data. If weights are provided, the ratio
-        is for the sum of weights.
+    cv_steps: int, optional (default=10)
+        Number of cross-validation steps. If < 2 the model is trained on
+        all samples and no prediction is made.
 
     Returns
     -------
-    ???
+    clf: object
+        Classifier that should be used for the classification.
+        It needs a fit and a predict_proba function.
+
+    y_pred : numpy.float32array, shape=(n_samples)
+        Array of the classifier score.
+
+    cv_step : numpy.int, shape=(n_samples)
+        Iteration in which the sample was classified.
     """
     desired_characteristics = ClassifierCharacteristics()
     desired_characteristics.opts['callable:fit'] = True
@@ -64,31 +72,38 @@ def roc_mismatch(clf,
     assert clf_characteristics.fulfilling(desired_characteristics), \
         'Classifier sanity check failed!'
 
-    if old_kfold:
-        cv_iterator = StratifiedKFold(y, n_folds=cv_steps,
-                                      shuffle=True)
-    else:
-        strat_kfold = StratifiedKFold(n_splits=cv_steps,
-                                      shuffle=True)
-        cv_iterator = strat_kfold.split(X, y)
-    y_pred = np.zeros_like(y, dtype=float)
-    cv_step = np.zeros_like(y, dtype=int)
+    if cv_steps < 2:
+        clf = clf.fit(X=X,
+                      y=y,
+                      sample_weight=sample_weight)
+        return clf, None, None
 
-    for i, [train_idx, test_idx] in enumerate(cv_iterator):
-        X_train = X[train_idx]
-        X_test = X[test_idx]
-        y_train = y[train_idx]
-        y_test = y[test_idx]
-        if sample_weight is None:
-            sample_weight_train = None
-            sample_weight_test = None
+    else:
+        if old_kfold:
+            cv_iterator = StratifiedKFold(y, n_folds=cv_steps,
+                                          shuffle=True)
         else:
-            sample_weight_train = sample_weight[train_idx]
-            sample_weight_test = sample_weight[test_idx]
-        clf = clf.fit(X=X_train,
-                      y=y_train,
-                      sample_weight=sample_weight_train)
-        y_pred[test_idx] = clf.predict_proba(X_test)[:, 1]
-        cv_step[test_idx] = i
-    return y_pred, cv_step, clf
+            strat_kfold = StratifiedKFold(n_splits=cv_steps,
+                                          shuffle=True)
+            cv_iterator = strat_kfold.split(X, y)
+        y_pred = np.zeros_like(y, dtype=float)
+        cv_step = np.zeros_like(y, dtype=int)
+
+        for i, [train_idx, test_idx] in enumerate(cv_iterator):
+            X_train = X[train_idx]
+            X_test = X[test_idx]
+            y_train = y[train_idx]
+            y_test = y[test_idx]
+            if sample_weight is None:
+                sample_weight_train = None
+                sample_weight_test = None
+            else:
+                sample_weight_train = sample_weight[train_idx]
+                sample_weight_test = sample_weight[test_idx]
+            clf = clf.fit(X=X_train,
+                          y=y_train,
+                          sample_weight=sample_weight_train)
+            y_pred[test_idx] = clf.predict_proba(X_test)[:, 1]
+            cv_step[test_idx] = i
+        return clf, y_pred, cv_step
 

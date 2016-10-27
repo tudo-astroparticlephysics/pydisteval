@@ -68,6 +68,8 @@ def prepare_data(test_df,
     elif test_weight is not None:
         # If ref uses weights, dummy weights are created
         sample_weight_test = np.ones(len(test_X_names), dtype=np.float32)
+    else:
+        sample_weight_test = None
     if ref_weight is not None:
         use_weights = True
         try:
@@ -81,6 +83,8 @@ def prepare_data(test_df,
     elif test_weight is not None:
         # If test uses weights, dummy weights are created
         sample_weight_ref = np.ones(len(ref_df), dtype=np.float32)
+    else:
+        sample_weight_ref = None
     # This sections warns the user about differences between the datasets
     if len(set.difference(ref_X_names, test_X_names)) > 0:
         unique_X_names_test = test_X_names.difference(ref_X_names)
@@ -97,11 +101,11 @@ def prepare_data(test_df,
 
     test_df = test_df.loc[:, X_names]
     X_test, y_test, sample_weight_test = convert_and_remove_non_finites(
-        test_df, sample_weight_weight)
+        test_df, sample_weight_test, is_ref=False)
 
     ref_df = ref_df.loc[:, X_names]
     X_ref, y_ref, sample_weight_ref = convert_and_remove_non_finites(
-        ref_df, sample_weight_ref)
+        ref_df, sample_weight_ref, is_ref=True)
 
     # In this section the desired test/ref ratio si realized
     if use_weights:
@@ -143,6 +147,10 @@ def convert_and_remove_non_finites(df, sample_weight, is_ref=False):
     sample_weight : array-like or None
         Array containing the weights for the samples.
 
+    is_ref : boolean
+        Indicates if the provided dataframe is should be treated as
+        reference data, so that y is set to 1.
+
     Returns
     -------
     X : numpy.float32array, shape=(n_samples, n_obs)
@@ -158,7 +166,7 @@ def convert_and_remove_non_finites(df, sample_weight, is_ref=False):
         Not None if ref_weight and/or test_weight was provided. If array
         is returned, it contains the sample weights
     """
-    X = np.array(df.loc[:, X_names].values, dtype=np.float32)
+    X = np.array(df.values, dtype=np.float32)
     if is_ref:
         y = np.ones(X.shape[0], dtype=int)
         set_name = 'reference set'
@@ -166,7 +174,7 @@ def convert_and_remove_non_finites(df, sample_weight, is_ref=False):
         y = np.zeros(X.shape[0], dtype=int)
         set_name = 'test set'
     isfinite = np.isfinite(X)
-    selected = np.sum(isfinite, axis=1) == len(X_names)
+    selected = np.sum(isfinite, axis=1) == len(df.columns)
     n_selected = np.sum(selected)
     if n_selected < X.shape[0]:
         n_removed = X.shape[0] - n_selected
@@ -174,7 +182,7 @@ def convert_and_remove_non_finites(df, sample_weight, is_ref=False):
         warnings.warn(msg)
     X = X[selected, :]
     y = y[selected]
-    if use_weights:
+    if sample_weight is not None:
         sample_weight = sample_weight[selected, :]
     return X, y, sample_weight
 
@@ -208,8 +216,8 @@ def shrink_data(selected, X, y, sample_weight=None):
     sample_weight : None or numpy.float32array, shape=(n_samples)
         If weights are used this shrinked array contains the sample weights.
     """
-    X = X[seleceted, :]
-    y = y[seleceted]
+    X = X[selected, :]
+    y = y[selected]
     if sample_weight is not None:
-        sample_weight = sample_weight[seleceted, :]
+        sample_weight = sample_weight[selected, :]
     return X, y, sample_weight
