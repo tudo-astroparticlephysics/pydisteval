@@ -74,7 +74,7 @@ def roc_mismatch(clf,
     y_pred = np.zeros_like(y, dtype=float)
     cv_step = np.zeros_like(y, dtype=int)
 
-    for i, [train_idx, test_idx] in enumerate(cv_iterator):
+    for i, [train_idx, test_idx] in tqdm(enumerate(cv_iterator)):
         X_train = X[train_idx]
         X_test = X[test_idx]
         y_train = y[train_idx]
@@ -91,4 +91,3 @@ def roc_mismatch(clf,
         y_pred[test_idx] = clf.predict_proba(X_test)[:, 1]
         cv_step[test_idx] = i
     return y_pred, cv_step, clf
-
