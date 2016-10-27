@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
+from tqdm import tqdm
+
+from logging import getLogger
+
 try:
     from sklearn.model_selection import StratifiedKFold
     old_kfold = False
@@ -10,16 +14,12 @@ except ImportError:
     old_kfold = True
 from sklearn.metrics import roc_curve, auc
 
-from .scripts.classifier_characteristics import ClassifierCharacteristics
-from .script.preparation import prepare_data
+from .scripts import ClassifierCharacteristics
+from .scripts import prepare_data
+
+logger = getLogger('disteval')
 
 __author__ = "Mathis Börner and Jens Buß"
-
-
-def main():
-    """Entry point for the application script"""
-    print("Call your main application code here")
-
 
 def roc_mismatch(clf,
                  X,
