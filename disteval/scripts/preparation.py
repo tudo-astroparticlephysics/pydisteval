@@ -14,10 +14,10 @@ def prepare_data(test_df,
 
     Parameters
     ----------
-    test_df : pandas.Dataframe, shape=(n_samples_mc, features)
+    test_df : pandas.Dataframe, shape=(n_samples, X_names)
         Dataframe of the test data
 
-    ref_df : pandas.Dataframe, shape=(n_samples_mc, features)
+    ref_df : pandas.Dataframe, shape=(n_samples, X_names)
         Dataframe of the reference data
 
     test_weight : str or None, optional (default=None)
@@ -47,18 +47,18 @@ def prepare_data(test_df,
         Not None if ref_weight and/or test_weight was provided. If array
         is returned, it contains the sample weights
 
-    obs : list[str]
+    X_names : list[str]
         List of the names of the columns of X
     """
     # make the dataframe homogenious
-    test_obs = set(test_df.columns)
-    ref_obs = set(ref_df.columns)
+    test_X_names = set(test_df.columns)
+    ref_X_names = set(ref_df.columns)
     # Check if weights are used
     use_weights = False
     if test_weight is not None:
         use_weights = True
         try:
-            test_obs.remove(test_weight)
+            test_X_names.remove(test_weight)
         except KeyError:
             raise KeyError('Weight \'%s\' not in test dataframe')
         else:
@@ -67,11 +67,11 @@ def prepare_data(test_df,
                                           dtype=np.float32)
     elif test_weight is not None:
         # If ref uses weights, dummy weights are created
-        sample_weight_test = np.ones(len(test_obs), dtype=np.float32)
+        sample_weight_test = np.ones(len(test_X_names), dtype=np.float32)
     if ref_weight is not None:
         use_weights = True
         try:
-            ref_obs.remove(ref_weight)
+            ref_X_names.remove(ref_weight)
         except KeyError:
             raise KeyError('Weight \'%s\' not in reference dataframe')
         else:
@@ -81,214 +81,135 @@ def prepare_data(test_df,
     elif test_weight is not None:
         # If test uses weights, dummy weights are created
         sample_weight_ref = np.ones(len(ref_df), dtype=np.float32)
-
-    if len(set.difference(ref_obs, test_obs)) > 0:
-        # This sections warns the user about differences between the datasets
-        unique_obs_test = test_obs.difference(ref_obs)
-        unique_obs_ref = test_obs.difference(ref_obs)
+    # This sections warns the user about differences between the datasets
+    if len(set.difference(ref_X_names, test_X_names)) > 0:
+        unique_X_names_test = test_X_names.difference(ref_X_names)
+        unique_X_names_ref = ref_X_names.difference(test_X_names)
         msg = 'Dataset are not consistent: '
-        for o in unique_obs_ref:
+        for o in unique_X_names_ref:
             msg += ' ref.%s' % o
-        for o in unique_obs_test:
+        for o in unique_X_names_test:
             msg += ' test.%s' % o
         msg += ' will be ignored'
         warnings.warn(msg)
 
-    obs = set.intersection(test_obs, ref_obs)
-    # Convert the dataframes to float32 numpy arrays, so they can be
-    # used by sklearn
-    test_df = test_df.loc[:, obs]
-    ref_df = ref_df.loc[:, obs]
-    X_test = np.array(test_df.loc[:, obs].values, dtype=np.float32)
-    X_ref = np.array(ref_df.loc[:, obs].values, dtype=np.float32)
-    y_test = np.zeros(X_test.shape[0], dtype=int)
-    y_ref = np.ones(X_ref.shape[0], dtype=int)
+    X_names = set.intersection(test_X_names, ref_X_names)
 
-    # Remove NaNs and INFs from the arrays and warn the user about them
-    isfinite_test = np.isfinite(X_test)
-    selected = np.sum(isfinite_test, axis=1) == len(obs)
-    n_selected = np.sum(selected)
-    if n_selected < X_test.shape[0]:
-        n_removed = X_test.shape[0] - n_selected
-        warnings.warn('%d NaNs removed from the test data' % n_removed)
-    X_test = X_test[selected, :]
-    y_test = y_test[selected]
-    if use_weights:
-        sample_weight_test = sample_weight_test[selected, :]
+    test_df = test_df.loc[:, X_names]
+    X_test, y_test, sample_weight_test = convert_and_remove_non_finites(
+        test_df, sample_weight_weight)
 
-    isfinite_ref = np.isfinite(X_ref)
-    selected = np.sum(isfinite_ref, axis=1) == len(obs)
-    n_selected = np.sum(selected)
-    if n_selected < X_ref.shape[0]:
-        n_removed = X_ref.shape[0] - n_selected
-        warnings.warn('%d NaNs removed from the ref data' % n_removed)
-    X_ref = X_ref[selected, :]
-    y_ref = y_ref[selected]
-    if use_weights:
-        sample_weight_ref = sample_weight_ref[selected, :]
+    ref_df = ref_df.loc[:, X_names]
+    X_ref, y_ref, sample_weight_ref = convert_and_remove_non_finites(
+        ref_df, sample_weight_ref)
 
     # In this section the desired test/ref ratio si realized
     if use_weights:
-        # If weights are used, the ratio is the ratio of sum of weights
-        sum_w_test = np.sum(sample_weight_test)
-        sum_w_ref = np.sum(sample_weight_ref)
-        if sum_w_test / sum_w_ref > test_ref_ratio:
-            probability = (test_ref_ratio * sum_w_ref) / sum_w_test
-            seleceted = np.random.uniform(size=X_test.shape[0]) <= probability
-            X_test = X_test[seleceted, :]
-            y_test = y_test[seleceted]
-            sample_weight_test = sample_weight_test[seleceted, :]
-        elif sum_w_test / sum_w_ref <= test_ref_ratio:
-            probability = sum_w_test / (sum_w_ref * test_ref_ratio)
-            seleceted = np.random.uniform(size=y_ref.shape[0]) <= probability
-            X_ref = X_ref[seleceted, :]
-            y_ref = y_ref[seleceted]
-            sample_weight_ref = sample_weight_ref[seleceted, :]
-        X = np.vstack((X_test, X_ref))
-        y = np.hstack((y_test, y_ref))
-        sample_weight = np.vstack((sample_weight_test, sample_weight_ref))
+        n_test = np.sum(sample_weight_test)
+        n_ref = np.sum(sample_weight_ref)
     else:
-        # Without weights the ratio is the number of samples in the datasets
-        n_rows_test = len(y_test)
-        n_rows_ref = len(y_ref)
-        if n_rows_test / n_rows_ref > test_ref_ratio:
-            probability = (test_ref_ratio * n_rows_ref) / n_rows_test
-            seleceted = np.random.uniform(size=X_test.shape[0]) <= probability
-            X_test = X_test[seleceted, :]
-            y_test = y_test[seleceted]
-        elif n_rows_test / n_rows_ref <= test_ref_ratio:
-            probability = (n_rows_test * test_ref_ratio) / n_rows_ref
-            seleceted = np.random.uniform(size=y_ref.shape[0]) <= probability
-            X_ref = X_ref[seleceted, :]
-            y_ref = y_ref[seleceted]
-        X = np.vstack((X_test, X_ref))
-        y = np.hstack((y_test, y_ref))
+        n_test = len(y_test)
+        n_ref = len(y_ref)
+    if n_test / n_ref > test_ref_ratio:
+        probability = (test_ref_ratio * n_ref) / n_test
+        seleceted = np.random.uniform(size=y_test.shape[0]) <= probability
+        X_test, y_test, sample_weight_test = shrink_data(
+            seleceted, X_test, y_test, sample_weight_test)
+    elif n_test / n_ref <= test_ref_ratio:
+        probability = n_test / (n_ref * test_ref_ratio)
+        seleceted = np.random.uniform(size=y_ref.shape[0]) <= probability
+        X_ref, y_ref, sample_weight_ref = shrink_data(
+            seleceted, X_ref, y_ref, sample_weight_ref)
+    # Combining ref and test data into single numpy arrays
+    X = np.vstack((X_test, X_ref))
+    y = np.hstack((y_test, y_ref))
+    if use_weights:
+        sample_weight = np.hstack((sample_weight_test, sample_weight_ref))
+    else:
         sample_weight = None
-    return X, y, sample_weight, obs
+    return X, y, sample_weight, X_names
 
 
-class ClassifierCharacteristics(object):
-    """Class to define and compare Characteristics of classifier.
-    The core of the Class is the dict ops containing keys whether
-    attributes or functions are required/forbidden. Keys like
-    'callable:fit' are True if the classifier has a callable function
-    'fit'. Keys like 'has:feature_importance' are True if the classifier
-    has an atribute 'feature_importance'.
-    True in the dict means function/attribute is needed or present.
-    False means function/attribute is forbidden or not present.
-    None in the dict means is ignore in the evaluation
+def convert_and_remove_non_finites(df, sample_weight, is_ref=False):
+    """Makes the dataframes usable for sklearn.
+    For this purpose they are converted to numpy arrays and non finites
+    are removed.
 
     Parameters
     ----------
-    clf: None or object
-        If None the dict is initiated with None for all keys.
-        If clf is provided the dict is contains only True and False
-        depending on the clf characteristics
+    df : pandas.Dataframe, shape=(n_samples, n_obs)
+        Dataframe that should be converted and filtered
 
-    Attributes
+    sample_weight : array-like or None
+        Array containing the weights for the samples.
+
+    Returns
+    -------
+    X : numpy.float32array, shape=(n_samples, n_obs)
+        Values of the columns which appeared in both Dataframes and
+        are not used as Weights
+
+    y : numpy.float32array, shape=(n_samples)
+        Array of the true labels.
+            1 = Reference
+            0 = Test
+
+    sample_weight : None or numpy.float32array, shape=(n_samples)
+        Not None if ref_weight and/or test_weight was provided. If array
+        is returned, it contains the sample weights
+    """
+    X = np.array(df.loc[:, X_names].values, dtype=np.float32)
+    if is_ref:
+        y = np.ones(X.shape[0], dtype=int)
+        set_name = 'reference set'
+    else:
+        y = np.zeros(X.shape[0], dtype=int)
+        set_name = 'test set'
+    isfinite = np.isfinite(X)
+    selected = np.sum(isfinite, axis=1) == len(X_names)
+    n_selected = np.sum(selected)
+    if n_selected < X.shape[0]:
+        n_removed = X.shape[0] - n_selected
+        msg = '%d non finites removed from %s' % (n_removed, set_name)
+        warnings.warn(msg)
+    X = X[selected, :]
+    y = y[selected]
+    if use_weights:
+        sample_weight = sample_weight[selected, :]
+    return X, y, sample_weight
+
+
+def shrink_data(selected, X, y, sample_weight=None):
+    """Shrinks the data arrays by applying the selected mask on X, y
+    and the sample weights.
+
+    Parameters
     ----------
-    opts : dict
-        Dictionary containing all the needed/desired characteristics.
+    selected : array-like with booleans
+        Indicated if a sample should be used or not.
 
-    clf : object
-        If a clf is provided, a pointer to the classifier is stored.
-        To check characteristics later on."""
-    def __init__(self, clf=None):
-        self.opts = {
-            'callable:fit': None,
-            'callable:predict': None,
-            'callable:predict_proba': None,
-            'callable:decision_function': None,
-            'has:feature_importance': None}
-        if clf is not None:
-            self.clf = clf
-            for key in self.opts.keys():
-                self.opts[key] = self.__evalute_clf__(key)
+    X : numpy.float32array, shape=(n_samples, n_obs)
+        Values describing the samples.
 
-    def __evalute_clf__(self, key):
-        """Check if the classifier provides the attribute/funtions
-        asked for with the key. Keys must start with either "callable:"
-        or "has:".
-        "callable:<name>"  would check for a funtions with the name <name>.
-        "has:<name>"  would check for a attribute with the name <name>.
-        Parameters
-        ----------
-        key: str
-            If None the dict is initiated with None for all keys.
-            If clf is provided the dict is contains only True and False
-            depending on the clf characteristics
+    y : numpy.float32array, shape=(n_samples)
+        Array of the true labels.
 
-        Returns
-        ----------
-        present : bool
-            Boolean whether the asked for characteristic is present"""
-        if key.startswith('callable:'):
-            desired_callable = key.replace('callable:', '')
-            if hasattr(self.clf, desired_callable):
-                if callable(getattr(self.clf, desired_callable)):
-                    return True
-        elif key.startswith('has:'):
-            desired_attribute = key.replace('has:', '')
-            if hasattr(self.clf, desired_attribute):
-                return True
-        else:
-            print(key)
-            raise ValueError('Opts keys have to start with eiter callable:'
-                             ' for functions or has: for attributes')
-        return False
+    sample_weight : None or numpy.float32array, shape=(n_samples)
+        If weights are used this array contains the sample weights.
 
-    def fulfilling(self, second_instance, two_sided=False):
-        """Check if the classifier provides the attribute/funtions
-        asked for with the key. Keys must start with either "callable:"
-        or "has:".
-        "callable:<name>"  would check for a funtions with the name <name>.
-        "has:<name>"  would check for a attribute with the name <name>.
-        Parameters
-        ----------
-        second_instance: ClassifierCharacteristics
-            Second instance of a ClassifierCharacteristics which defines
-            the needed characteristics.
+    Returns
+    -------
+    X : numpy.float32array, shape=(n_samples, n_obs)
+        Shrinked values describing the samples.
 
-        two_sided: boolean, optional (default=False)
-            If False only the characteristics asked for in the second
-            instance has to be fulfilled. If two_sided is True. Both
-            instances has to be the same (equivalent to __eq__)
+    y : numpy.float32array, shape=(n_samples)
+        Shrinked array of the true labels.
 
-        Returns
-        ----------
-        present : bool
-            Boolean whether the asked for characteristic is present"""
-        if two_sided:
-            check_keys_1 = set([k for k, v in self.opts.items()
-                                if v is not None])
-            check_keys_2 = set([k for k, v in second_instance.opts.items()
-                                if v is not None])
-            check_keys = check_keys_1.intersection(check_keys_2)
-        else:
-            check_keys = [k for k, v in second_instance.opts.items()
-                          if v is not None]
-        for key in check_keys:
-            if key not in self.opts.keys():
-                if hasattr(self, 'clf'):
-                    value = self.__evalute_clf__(key)
-                    self.opts[key] = value
-                else:
-                    raise KeyError('%s not set for the comparison partner')
-            if key not in second_instance.opts.keys():
-                if hasattr(second_instance, 'clf'):
-                    value = second_instance.__evalute_clf__(key)
-                    second_instance.opts[key] = value
-                else:
-                    raise KeyError('%s not set for the comparison partner')
-            if self.opts[key] != second_instance.opts[key]:
-                att = key.replace('callable:', '')
-                att = att.replace('has:', '')
-                if self.opts[key]:
-                    msg = 'Provided classifier has %s' % att
-                else:
-                    msg = 'Provided classifier is missing %s' % att
-                raise AttributeError(msg)
-        return True
-
-    def __eq__(self, second_instance):
-        return self.fulfilling(second_instance, two_sided=True)
+    sample_weight : None or numpy.float32array, shape=(n_samples)
+        If weights are used this shrinked array contains the sample weights.
+    """
+    X = X[seleceted, :]
+    y = y[seleceted]
+    if sample_weight is not None:
+        sample_weight = sample_weight[seleceted, :]
+    return X, y, sample_weight

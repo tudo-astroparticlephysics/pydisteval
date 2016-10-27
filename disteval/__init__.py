@@ -4,13 +4,14 @@ import numpy as np
 
 try:
     from sklearn.model_selection import StratifiedKFold
-    old_kfold = False 
+    old_kfold = False
 except ImportError:
     from sklearn.cross_validation import StratifiedKFold
     old_kfold = True
 from sklearn.metrics import roc_curve, auc
 
-from .scripts.preparation import prepare_data, ClassifierCharacteristics
+from .scripts.classifier_characteristics import ClassifierCharacteristics
+from .script.preparation import prepare_data
 
 __author__ = "Mathis Börner and Jens Buß"
 
@@ -20,13 +21,11 @@ def main():
     print("Call your main application code here")
 
 
-def roc_mismatch(test_df,
-                 ref_df,
-                 clf,
-                 cv_steps=10,
-                 test_weight=None,
-                 ref_weight=None,
-                 test_ref_ratio=1.):
+def roc_mismatch(clf,
+                 X,
+                 y,
+                 sample_weight=None,
+                 cv_steps=10):
     """Runs a classification betwenn the test data and the reference data.
     For this classification the ROC-Curve  is analysed to check if the
     classifier is sensitive for potential mismathces.
@@ -60,14 +59,10 @@ def roc_mismatch(test_df,
     desired_characteristics = ClassifierCharacteristics()
     desired_characteristics.opts['callable:fit'] = True
     desired_characteristics.opts['callable:predict_proba'] = True
+
     clf_characteristics = ClassifierCharacteristics(clf)
     assert clf_characteristics.fulfilling(desired_characteristics), \
         'Classifier sanity check failed!'
-    X, y, sample_weight, obs = prepare_data(test_df,
-                                            ref_df,
-                                            test_weight=None,
-                                            ref_weight=None,
-                                            test_ref_ratio=1.)
 
     if old_kfold:
         cv_iterator = StratifiedKFold(y, n_folds=cv_steps,
@@ -77,9 +72,9 @@ def roc_mismatch(test_df,
                                       shuffle=True)
         cv_iterator = strat_kfold.split(X, y)
     y_pred = np.zeros_like(y, dtype=float)
-    roc_curves = []
+    cv_step = np.zeros_like(y, dtype=int)
 
-    for train_idx, test_idx in cv_iterator:
+    for i, [train_idx, test_idx] in enumerate(cv_iterator):
         X_train = X[train_idx]
         X_test = X[test_idx]
         y_train = y[train_idx]
@@ -90,12 +85,10 @@ def roc_mismatch(test_df,
         else:
             sample_weight_train = sample_weight[train_idx]
             sample_weight_test = sample_weight[test_idx]
-        clf = clf.fit(X_train, y_train, sample_weight_train)
-        y_pred_test = clf.predict_proba(X_test)[:, 1]
-        roc_curves.append(roc_curve(y_test, y_pred_test,
-                                    sample_weight=sample_weight_test))
-        y_pred[test_idx] = y_pred_test
+        clf = clf.fit(X=X_train,
+                      y=y_train,
+                      sample_weight=sample_weight_train)
+        y_pred[test_idx] = clf.predict_proba(X_test)[:, 1]
+        cv_step[test_idx] = i
+    return y_pred, cv_step, clf
 
-    auc_values = [auc(fpr, tpr) for fpr, tpr, _ in roc_curves]
-
-    print('AUC: %.3f +/- %.3f' % (np.mean(auc_values), np.std(auc_values)))
