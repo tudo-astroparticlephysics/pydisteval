@@ -5,8 +5,6 @@ import logging
 
 from sklearn.ensemble import RandomForestClassifier
 
-from IPython import embed
-
 import disteval
 
 log = logging.getLogger("disteval.fact_example")
