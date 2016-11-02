@@ -1,9 +1,14 @@
 import numpy as np
 import pandas as pd
 
-import disteval
+import logging
 
 from sklearn.ensemble import RandomForestClassifier
+
+import disteval
+
+log = logging.getLogger('shift_helper')
+log.setLevel(logging.INFO)
 
 data_df = pd.read_hdf('/fhgfs/groups/app/fact/data_analysis_output/facttoolsParameterRootFiles/AnalysisV_sourceFix/Crab.hdf5')
 mc_df = pd.read_hdf('/fhgfs/groups/app/fact/simulated/FacttoolsParamRootFiles/AnalysisV_sourceFix/proton_12.hdf5')
@@ -70,11 +75,13 @@ mc_df = mc_df.loc[:, training_variables]
 
 clf = RandomForestClassifier(n_jobs=30, n_estimators=200)
 
-X, y, sample_weight = disteval.prepare_data(test_df,
-                                   ref_df,
-                                   test_weight=None,
-                                   ref_weight=None,
-                                   test_ref_ratio=1.)
-y_pred, cv_step, clf = disteval.roc_mismatch(X, y, sample_weight, clf, cv_steps=10)
-eval_result = evaluate_roc_mismatch(y, y_pred, cv_step)
-visualize_roc_mismatch(eval_result, path=)
+X, y, sample_weight = disteval.prepare_data(mc_df,
+                                            data_df,
+                                            test_weight=None,
+                                            ref_weight=None,
+                                            test_ref_ratio=1.)
+y_pred, cv_step, clf = disteval.cv_test_ref_classification(clf,
+                                                           X,
+                                                           y,
+                                                           sample_weight,
+                                                           cv_steps=10)

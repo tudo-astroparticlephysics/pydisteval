@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
+from tqdm import tqdm
+
+from logging import getLogger
+
 try:
     from sklearn.model_selection import StratifiedKFold
     old_kfold = False
@@ -10,16 +14,19 @@ except ImportError:
     old_kfold = True
 from sklearn.metrics import roc_curve, auc
 
+<<<<<<< HEAD
 from .scripts.classifier_characteristics import ClassifierCharacteristics
 from .scripts.preparation import prepare_data
 
 __author__ = "Mathis Börner and Jens Buß"
+=======
+from .scripts import ClassifierCharacteristics
+from .scripts import prepare_data
+>>>>>>> 84d55a86e8890533765e630e4ee6153fec442a9b
 
+logger = getLogger('disteval')
 
-def main():
-    """Entry point for the application script"""
-    print("Call your main application code here")
-
+__author__ = "Mathis Börner and Jens Buß"
 
 def cv_test_ref_classification(clf,
                  X,
@@ -53,11 +60,15 @@ def cv_test_ref_classification(clf,
         Number of cross-validation steps. If < 2 the model is trained on
         all samples and no prediction is made.
 
+    return_all_models: bool, optional (default=False)
+        If all models for the cross-validiation should be saved and 
+        returned.
+
     Returns
     -------
     clf: object
-        Classifier that should be used for the classification.
-        It needs a fit and a predict_proba function.
+        Trained classifier. If return_all_models, a liste of all trained
+        classifiers, is returned.
 
     y_pred : numpy.float32array, shape=(n_samples)
         Array of the classifier score.
