@@ -3,7 +3,9 @@
 import warnings
 
 import numpy as np
-
+import logging
+log = logging.getLogger('disteval.preparation')
+log.setLevel(logging.INFO)
 
 def prepare_data(test_df,
                  ref_df,
