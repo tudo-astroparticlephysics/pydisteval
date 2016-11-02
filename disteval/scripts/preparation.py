@@ -52,6 +52,8 @@ def prepare_data(test_df,
     X_names : list[str]
         List of the names of the columns of X
     """
+
+    log.debug("Praparing Data")
     # make the dataframe homogenious
     test_X_names = set(test_df.columns)
     ref_X_names = set(ref_df.columns)
@@ -168,6 +170,7 @@ def convert_and_remove_non_finites(df, sample_weight, is_ref=False):
         Not None if ref_weight and/or test_weight was provided. If array
         is returned, it contains the sample weights
     """
+    log.debug("Converting")
     X = np.array(df.values, dtype=np.float32)
     if is_ref:
         y = np.ones(X.shape[0], dtype=int)
@@ -181,7 +184,7 @@ def convert_and_remove_non_finites(df, sample_weight, is_ref=False):
     if n_selected < X.shape[0]:
         n_removed = X.shape[0] - n_selected
         msg = '%d non finites removed from %s' % (n_removed, set_name)
-        warnings.warn(msg)
+        log.info(msg)
     X = X[selected, :]
     y = y[selected]
     if sample_weight is not None:
