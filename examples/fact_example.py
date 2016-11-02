@@ -68,20 +68,32 @@ training_variables = ['ConcCore',
                       'phChargeShower_min',
                       'phChargeShower_skewness',
                       'phChargeShower_variance',
-                      'photonchargeMean']
+                      'photonchargeMean',
+                      ]
 
-data_df = data_df.loc[:, training_variables]
-mc_df = mc_df.loc[:, training_variables]
+def main():
 
-clf = RandomForestClassifier(n_jobs=30, n_estimators=200)
+    data_df = pd.read_hdf(test_filename1)
+    mc_df = pd.read_hdf(test_filename2)
 
-X, y, sample_weight = disteval.prepare_data(mc_df,
-                                            data_df,
-                                            test_weight=None,
-                                            ref_weight=None,
-                                            test_ref_ratio=1.)
-y_pred, cv_step, clf = disteval.cv_test_ref_classification(clf,
-                                                           X,
-                                                           y,
-                                                           sample_weight,
-                                                           cv_steps=10)
+
+    data_df = data_df.loc[:, training_variables]
+    mc_df = mc_df.loc[:, training_variables]
+
+    clf = RandomForestClassifier(n_jobs=30, n_estimators=200)
+
+    X, y, sample_weight, X_names = disteval.prepare_data(mc_df,
+                                                data_df,
+                                                test_weight=None,
+                                                ref_weight=None,
+                                                test_ref_ratio=1.,
+                                                )
+
+    y_pred, cv_step, clf = disteval.cv_test_ref_classification(clf,
+                                                               X,
+                                                               y,
+                                                               sample_weight,
+                                                               cv_steps=10)
+
+if __name__ == "__main__":
+    main()
