@@ -5,12 +5,16 @@ import logging
 
 from sklearn.ensemble import RandomForestClassifier
 
+from IPython import embed
+
 import disteval
 
 log = logging.getLogger("disteval.fact_example")
 
-data_df = pd.read_hdf('/fhgfs/groups/app/fact/data_analysis_output/facttoolsParameterRootFiles/AnalysisV_sourceFix/Crab.hdf5')
-mc_df = pd.read_hdf('/fhgfs/groups/app/fact/simulated/FacttoolsParamRootFiles/AnalysisV_sourceFix/proton_12.hdf5')
+test_filename1 = '/fhgfs/groups/app/fact/data_analysis_output/facttoolsParameterRootFiles/AnalysisV_sourceFix/Crab.hdf5'
+
+test_filename2 = '/fhgfs/groups/app/fact/simulated/FacttoolsParamRootFiles/AnalysisV_sourceFix/proton_12.hdf5'
+
 training_variables = ['ConcCore',
                       'Concentration_onePixel',
                       'Concentration_twoPixel',
