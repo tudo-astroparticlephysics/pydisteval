@@ -7,8 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 import disteval
 
-log = logging.getLogger('shift_helper')
-log.setLevel(logging.INFO)
+log = logging.getLogger("disteval.fact_example")
 
 data_df = pd.read_hdf('/fhgfs/groups/app/fact/data_analysis_output/facttoolsParameterRootFiles/AnalysisV_sourceFix/Crab.hdf5')
 mc_df = pd.read_hdf('/fhgfs/groups/app/fact/simulated/FacttoolsParamRootFiles/AnalysisV_sourceFix/proton_12.hdf5')
@@ -72,16 +71,21 @@ training_variables = ['ConcCore',
                       ]
 
 def main():
+    logging.captureWarnings(True)
+    logging.basicConfig(format=('%(asctime)s|%(name)s|%(levelname)s| ' +  '%(message)s'), level=logging.INFO)
+    log.info("Starting FACT example")
 
     data_df = pd.read_hdf(test_filename1)
     mc_df = pd.read_hdf(test_filename2)
 
 
+    log.info("Reducing Features")
     data_df = data_df.loc[:, training_variables]
     mc_df = mc_df.loc[:, training_variables]
 
     clf = RandomForestClassifier(n_jobs=30, n_estimators=200)
 
+    log.info("Data preparation")
     X, y, sample_weight, X_names = disteval.prepare_data(mc_df,
                                                 data_df,
                                                 test_weight=None,
@@ -89,6 +93,7 @@ def main():
                                                 test_ref_ratio=1.,
                                                 )
 
+    log.info("test classifiaction")
     y_pred, cv_step, clf = disteval.cv_test_ref_classification(clf,
                                                                X,
                                                                y,
