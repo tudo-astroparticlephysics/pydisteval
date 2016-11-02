@@ -25,7 +25,8 @@ def cv_test_ref_classification(clf,
                  X,
                  y,
                  sample_weight=None,
-                 cv_steps=10):
+                 cv_steps=10,
+                 return_all_models=False):
     """Runs a classification betwenn the test data and the reference data.
     This classification is run in a cross-validation with a provided
     classifier. The classifier needs a fit function to start the model
@@ -88,7 +89,9 @@ def cv_test_ref_classification(clf,
             cv_iterator = strat_kfold.split(X, y)
         y_pred = np.zeros_like(y, dtype=float)
         cv_step = np.zeros_like(y, dtype=int)
-
+        if return_all_models:
+            from copy import deepcopy
+            trained_clfs= []
         for i, [train_idx, test_idx] in enumerate(cv_iterator):
             X_train = X[train_idx]
             X_test = X[test_idx]
@@ -105,5 +108,8 @@ def cv_test_ref_classification(clf,
                           sample_weight=sample_weight_train)
             y_pred[test_idx] = clf.predict_proba(X_test)[:, 1]
             cv_step[test_idx] = i
+            if return_all_models:
+                trained_clfs.append(deepcopy(clf))
+        if return_all_models:
+            clf = trained_clfs
         return clf, y_pred, cv_step
-
