@@ -14,15 +14,8 @@ except ImportError:
     old_kfold = True
 from sklearn.metrics import roc_curve, auc
 
-<<<<<<< HEAD
 from .scripts.classifier_characteristics import ClassifierCharacteristics
 from .scripts.preparation import prepare_data
-
-__author__ = "Mathis Börner and Jens Buß"
-=======
-from .scripts import ClassifierCharacteristics
-from .scripts import prepare_data
->>>>>>> 84d55a86e8890533765e630e4ee6153fec442a9b
 
 logger = getLogger('disteval')
 

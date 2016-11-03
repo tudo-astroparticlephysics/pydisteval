@@ -7,11 +7,12 @@ from sklearn.ensemble import RandomForestClassifier
 
 import disteval
 
-log = logging.getLogger('shift_helper')
-log.setLevel(logging.INFO)
+log = logging.getLogger("disteval.fact_example")
 
-data_df = pd.read_hdf('/fhgfs/groups/app/fact/data_analysis_output/facttoolsParameterRootFiles/AnalysisV_sourceFix/Crab.hdf5')
-mc_df = pd.read_hdf('/fhgfs/groups/app/fact/simulated/FacttoolsParamRootFiles/AnalysisV_sourceFix/proton_12.hdf5')
+test_filename1 = '/fhgfs/groups/app/fact/data_analysis_output/facttoolsParameterRootFiles/AnalysisV_sourceFix/Crab.hdf5'
+
+test_filename2 = '/fhgfs/groups/app/fact/simulated/FacttoolsParamRootFiles/AnalysisV_sourceFix/proton_12.hdf5'
+
 training_variables = ['ConcCore',
                       'Concentration_onePixel',
                       'Concentration_twoPixel',
@@ -68,20 +69,38 @@ training_variables = ['ConcCore',
                       'phChargeShower_min',
                       'phChargeShower_skewness',
                       'phChargeShower_variance',
-                      'photonchargeMean']
+                      'photonchargeMean',
+                      ]
 
-data_df = data_df.loc[:, training_variables]
-mc_df = mc_df.loc[:, training_variables]
+def main():
+    logging.captureWarnings(True)
+    logging.basicConfig(format=('%(asctime)s|%(name)s|%(levelname)s| ' +  '%(message)s'), level=logging.INFO)
+    log.info("Starting FACT example")
 
-clf = RandomForestClassifier(n_jobs=30, n_estimators=200)
+    data_df = pd.read_hdf(test_filename1)
+    mc_df = pd.read_hdf(test_filename2)
 
-X, y, sample_weight = disteval.prepare_data(mc_df,
-                                            data_df,
-                                            test_weight=None,
-                                            ref_weight=None,
-                                            test_ref_ratio=1.)
-y_pred, cv_step, clf = disteval.cv_test_ref_classification(clf,
-                                                           X,
-                                                           y,
-                                                           sample_weight,
-                                                           cv_steps=10)
+
+    log.info("Reducing Features")
+    data_df = data_df.loc[:, training_variables]
+    mc_df = mc_df.loc[:, training_variables]
+
+    clf = RandomForestClassifier(n_jobs=30, n_estimators=200)
+
+    log.info("Data preparation")
+    X, y, sample_weight, X_names = disteval.prepare_data(mc_df,
+                                                data_df,
+                                                test_weight=None,
+                                                ref_weight=None,
+                                                test_ref_ratio=1.,
+                                                )
+
+    log.info("test classifiaction")
+    y_pred, cv_step, clf = disteval.cv_test_ref_classification(clf,
+                                                               X,
+                                                               y,
+                                                               sample_weight,
+                                                               cv_steps=10)
+
+if __name__ == "__main__":
+    main()
