@@ -106,7 +106,7 @@ def main():
     kept, mean_imp, std_imp = eval.feature_importance_mad(clf, alpha=0.05)
     removed_features_str = ''
     for i in np.argsort(mean_imp)[::-1]:
-        if kept[i]:
+        if not kept[i]:
             removed_features_str += '{}, '.format(X_names[i])
 
     log.info("Removed Features MAD evaluation:")
@@ -117,7 +117,7 @@ def main():
         clf, ratio=0.9, alpha=0.10)
     removed_features_str = ''
     for i in np.argsort(mean_imp)[::-1]:
-        if kept[i]:
+        if not kept[i]:
             removed_features_str += '{}, '.format(X_names[i])
     log.info("Removed Features majority MAD evaluation:")
     log.info("[Order from high to low mean importance]")
