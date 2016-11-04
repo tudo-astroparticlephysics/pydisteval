@@ -100,7 +100,11 @@ def main():
                                                                X,
                                                                y,
                                                                sample_weight,
-                                                               cv_steps=10)
+                                                               cv_steps=10
+                                                               )
+    from disteval.evaluation import feature_importance_mad
+    kept, mean_imp, std_imp = feature_importance_mad(clf, alpha=0.05)
+
 
 if __name__ == "__main__":
     main()
