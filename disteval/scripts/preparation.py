@@ -207,7 +207,7 @@ def shrink_data(selected, X, y, sample_weight=None):
     y : numpy.float32array, shape=(n_samples)
         Array of the true labels.
 
-    sample_weight : None or numpy.float32array, shape=(n_samples)
+    sample_weight : None (default) or numpy.float32array, shape=(n_samples)
         If weights are used this array contains the sample weights.
 
     Returns
