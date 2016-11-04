@@ -96,7 +96,7 @@ def main():
                                                 )
 
     log.info("test classifiaction")
-    y_pred, cv_step, clf = disteval.cv_test_ref_classification(clf,
+    clf, y_pred, cv_step = disteval.cv_test_ref_classification(clf,
                                                                X,
                                                                y,
                                                                sample_weight,
