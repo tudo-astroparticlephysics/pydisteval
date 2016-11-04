@@ -82,7 +82,7 @@ def feature_importance_mad(clf, alpha=0.05):
     return kept, feature_importance, feature_importance_std
 
 
-def feature_importance_mad_majority(clfs, ratio=0.9, alpha=0.32):
+def feature_importance_mad_majority(clfs, ratio=0.9, alpha=0.10):
     """In this function a list of classifier must be provided. To decide
     if a feature is removed, for each classifier the function
     feature_importance_mad with the provided alpha is evaluated. And if
@@ -90,7 +90,9 @@ def feature_importance_mad_majority(clfs, ratio=0.9, alpha=0.32):
     the feature is removed. The motivation behind the majority vote is,
     that if a feature is just above the threshold in a single test
     because of statistical fluctuation is should be below the threshold
-    for most of the classifications.
+    for most of the classifications. The alpha can be set less
+    conservative because this criteria is more robust against
+    statistical fluctuationsc.
 
     Parameters
     ----------
