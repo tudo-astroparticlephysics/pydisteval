@@ -6,6 +6,7 @@ import logging
 from sklearn.ensemble import RandomForestClassifier
 
 import disteval
+from disteval import evaluation as eval
 
 log = logging.getLogger("disteval.fact_example")
 
@@ -85,6 +86,7 @@ def main():
     data_df = data_df.loc[:, training_variables]
     mc_df = mc_df.loc[:, training_variables]
 
+
     clf = RandomForestClassifier(n_jobs=30, n_estimators=200)
 
     log.info("Data preparation")
@@ -94,25 +96,31 @@ def main():
                                                 ref_weight=None,
                                                 test_ref_ratio=1.,
                                                 )
+    del data_df
+    del mc_df
 
     log.info("test classifiaction")
-    clf, y_pred, cv_step = disteval.cv_test_ref_classification(clf,
-                                                               X,
-                                                               y,
-                                                               sample_weight,
-                                                               cv_steps=10
-                                                               )
-    from disteval.evaluation import feature_importance_mad
-    kept, mean_imp, std_imp = feature_importance_mad(clf, alpha=0.05)
-    order = np.argsort(mean_imp)[::-1]
+    clf, y_pred, cv_step = disteval.cv_test_ref_classification(
+        clf, X, y, sample_weight, cv_steps=10, return_all_models=True)
+
+    kept, mean_imp, std_imp = eval.feature_importance_mad(clf, alpha=0.05)
     removed_features_str = ''
-    i = 0
-    while not kept[i]:
-        removed_features_str += '{}, '.fortmat(X_names[order[i]])
-        i += 1
-    log.info("Removed Features from big to small mismatch:")
+    for i in np.argsort(mean_imp)[::-1]:
+        if kept[i]:
+            removed_features_str += '{}, '.format(X_names[i])
+
+    log.info("Removed Features MAD evaluation:")
+    log.ingo("[Order from high to low mean importance]")
     log.info(removed_features_str)
 
-
+    kept, mean_imp, std_imp = eval.feature_importance_mad_majority(
+        clf, ratio=0.9, alpha=0.10)
+    removed_features_str = ''
+    for i in np.argsort(mean_imp)[::-1]:
+        if kept[i]:
+            removed_features_str += '{}, '.format(X_names[i])
+    log.info("Removed Features majority MAD evaluation:")
+    log.ingo("[Order from high to low mean importance]")
+    log.info(removed_features_str)
 if __name__ == "__main__":
     main()
