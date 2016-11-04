@@ -135,7 +135,7 @@ def prepare_data(test_df,
         sample_weight = np.hstack((sample_weight_test, sample_weight_ref))
     else:
         sample_weight = None
-    return X, y, sample_weight, X_names
+    return X, y, sample_weight, list(X_names)
 
 
 def convert_and_remove_non_finites(df, sample_weight, is_ref=False):
