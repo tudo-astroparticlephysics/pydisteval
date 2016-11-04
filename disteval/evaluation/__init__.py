@@ -71,9 +71,9 @@ def feature_importance_mad(clf, alpha=0.05):
         assert clf_characteristics.fulfilling(desired_characteristics), \
             'Classifier sanity check failed!'
         feature_importance = clf.feature_importances_
-        feature_importance_std = None
+        feature_importance_std = np.NaN
 
-    threshold = norm.ppf(1 - alpha/2) * 1.4826
+    threshold = norm.ppf(1 - alpha/2) * 1.4826 # see docstring
     median_importance = np.median(feature_importance)
     MAD = np.median(np.absolute(feature_importance - median_importance))
     diff = feature_importance - median_importance
@@ -115,7 +115,7 @@ def feature_importance_mad_majority(clfs, ratio=0.9, alpha=0.10):
         Array of the importance values for the features. If a list of
         classifier is passed, it is the mean over all classifier.
 
-    feature_importance_std: None or numpy.array, shape=(n_features)
+    feature_importance_std: numpy.array, shape=(n_features)
         If a list of classifier is passed the standard deviation is of
         the feature importance values is returned. Otherwise None is
         returned
