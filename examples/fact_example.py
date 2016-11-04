@@ -104,6 +104,14 @@ def main():
                                                                )
     from disteval.evaluation import feature_importance_mad
     kept, mean_imp, std_imp = feature_importance_mad(clf, alpha=0.05)
+    order = np.argsort(mean_imp)[::-1]
+    removed_features_str = ''
+    i = 0
+    while not kept[i]:
+        removed_features_str += '{}, '.fortmat(X_names[order[i]])
+        i += 1
+    log.info("Removed Features from big to small mismatch:")
+    log.info(removed_features_str)
 
 
 if __name__ == "__main__":
