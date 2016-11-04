@@ -2,8 +2,11 @@
 """
 Collection of methods to evaluate the results of disteval functions
 """
-from scipy.stats import norm
 
+import numpy as np
+
+from scipy.stats import norm
+from ..scripts.classifier_characteristics import ClassifierCharacteristics
 
 def feature_importance_mad(clf, alpha=0.05):
     """This function fetches the feature importance values and runs a
@@ -34,10 +37,11 @@ def feature_importance_mad(clf, alpha=0.05):
 
     alpha : float, optional (default=0.05)
         Parameter tuning the threshold. See function describtion.
+
     Returns
     -------
     kept: numpy.boolarray, shape=(n_features)
-        Wether the feature passes the MAD criteria.
+        Whether the feature passes the MAD criteria.
 
     feature_importance: numpy.array, shape=(n_features)
         Array of the importance values for the features. If a list of
@@ -74,5 +78,59 @@ def feature_importance_mad(clf, alpha=0.05):
     MAD = np.median(np.absolute(feature_importance - median_importance))
     diff = feature_importance - median_importance
     kept = np.logical_or(np.absolute(diff) < threshold * MAD,
-                         feature_importance > median_importance)
+                         feature_importance <= median_importance)
+    return kept, feature_importance, feature_importance_std
+
+
+def feature_importance_mad_majority(clfs, ratio=0.9, alpha=0.32):
+    """In this function a list of classifier must be provided. To decide
+    if a feature is removed, for each classifier the function
+    feature_importance_mad with the provided alpha is evaluated. And if
+    a feature is removed in atleast ratio-percent of the classifiers
+    the feature is removed. The motivation behind the majority vote is,
+    that if a feature is just above the threshold in a single test
+    because of statistical fluctuation is should be below the threshold
+    for most of the classifications.
+
+    Parameters
+    ----------
+    clf: list
+        List of trained classifier.
+
+    ratio : float, optional (default=0.9)
+        Ratio of classifiers in which the feature should be removed.
+
+    alpha : float, optional (default=0.05)
+        Parameter tuning the threshold. See feature_importance_mad
+        describtion.
+
+    Returns
+    -------
+    kept: numpy.boolarray, shape=(n_features)
+        Whether the feature passes the MAD criteria.
+
+    feature_importance: numpy.array, shape=(n_features)
+        Array of the importance values for the features. If a list of
+        classifier is passed, it is the mean over all classifier.
+
+    feature_importance_std: None or numpy.array, shape=(n_features)
+        If a list of classifier is passed the standard deviation is of
+        the feature importance values is returned. Otherwise None is
+        returned
+    """
+    desired_characteristics = ClassifierCharacteristics()
+    desired_characteristics.opts['has:feature_importances_'] = True
+    assert isinstance(clfs, list), 'List of classifier has to be provided'
+    kept_arr = []
+    feature_importances = []
+    for i, clf_i in enumerate(clfs):
+        kept, feature_importance, _ = feature_importance_mad(clf_i,
+                                                             alpha=alpha)
+        kept_arr.append(kept)
+        feature_importances.append(feature_importance)
+    kept_arr = np.array(kept_arr)
+    feature_importances = np.array(feature_importances)
+    feature_importance = np.mean(feature_importances, axis=0)
+    feature_importance_std = np.std(feature_importances, axis=0, ddof=1)
+    kept = np.sum(kept_arr, axis=0) >= ratio*kept_arr.shape[0]
     return kept, feature_importance, feature_importance_std
