@@ -110,7 +110,7 @@ def main():
             removed_features_str += '{}, '.format(X_names[i])
 
     log.info("Removed Features MAD evaluation:")
-    log.ingo("[Order from high to low mean importance]")
+    log.info("[Order from high to low mean importance]")
     log.info(removed_features_str)
 
     kept, mean_imp, std_imp = eval.feature_importance_mad_majority(
@@ -120,7 +120,7 @@ def main():
         if kept[i]:
             removed_features_str += '{}, '.format(X_names[i])
     log.info("Removed Features majority MAD evaluation:")
-    log.ingo("[Order from high to low mean importance]")
+    log.info("[Order from high to low mean importance]")
     log.info(removed_features_str)
 if __name__ == "__main__":
     main()
