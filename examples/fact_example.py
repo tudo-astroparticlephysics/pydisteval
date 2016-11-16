@@ -87,7 +87,7 @@ def main():
     mc_df = mc_df.loc[:, training_variables]
 
 
-    clf = RandomForestClassifier(n_jobs=, n_estimators=200)
+    clf = RandomForestClassifier(n_jobs=40, n_estimators=200)
 
     log.info("Data preparation")
     X, y, sample_weight, X_names = disteval.prepare_data(mc_df,
@@ -98,6 +98,29 @@ def main():
                                                          )
     del data_df
     del mc_df
+
+    clf = RandomForestClassifier(n_jobs=10, n_estimators=50)
+
+    selected_features = disteval.recursive_feature_selection_roc_auc(
+        clf,
+        X,
+        y,
+        n_features=10,
+        cv_steps=5,
+        n_jobs=4,
+        forward=True,
+        matching_features=False)
+    for i in selected_features:
+        removed_features_str += '{}, '.format(X_names[i])
+    log.info("Features obtain via Forward Selection:")
+    log.info("[Order from early to late selection]")
+    log.info(removed_features_str)
+
+
+
+    exit()
+
+
 
     log.info("test classifiaction")
     clf, y_pred, cv_step = disteval.cv_test_ref_classification(
@@ -125,7 +148,7 @@ def main():
 
     clf = RandomForestClassifier(n_jobs=10, n_estimators=50)
 
-    selected_features = recursive_feature_selection_roc_auc(
+    selected_features = disteval.recursive_feature_selection_roc_auc(
         clf,
         X,
         y,
