@@ -16,6 +16,8 @@ from sklearn.metrics import roc_curve, auc
 from .scripts.classifier_characteristics import ClassifierCharacteristics
 from .scripts.recursive_selection_parallel import get_all_auc_scores
 
+from .scripts.preparation import prepare_data
+
 logger = getLogger('disteval')
 
 __author__ = "Mathis Börner and Jens Buß"
@@ -192,7 +194,8 @@ def recursive_feature_selection_roc_auc(clf,
     -------
     selected_features: list of ints
         Return a list containing the indeces of X, that were
-        selected/eliminated.
+        selected/eliminated. The order corresponds to the order the
+        features were selected/eliminated.
     """
     desired_characteristics = ClassifierCharacteristics()
     desired_characteristics.opts['callable:fit'] = True
@@ -211,9 +214,12 @@ def recursive_feature_selection_roc_auc(clf,
                                         cv_steps=cv_steps,
                                         n_jobs=n_jobs,
                                         forward=forward)
-        value_best = 0
+        value_best = None
         index_best = None
         for idx, auc in auc_scores:
+            if value_best is None:
+                value_best = auc
+                index_best = idx
             if matching_features:
                 if forward:
                     if np.abs(auc-0.5) < np.abs(value_best-0.5):

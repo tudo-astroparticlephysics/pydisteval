@@ -87,7 +87,7 @@ def main():
     mc_df = mc_df.loc[:, training_variables]
 
 
-    clf = RandomForestClassifier(n_jobs=30, n_estimators=200)
+    clf = RandomForestClassifier(n_jobs=, n_estimators=200)
 
     log.info("Data preparation")
     X, y, sample_weight, X_names = disteval.prepare_data(mc_df,
@@ -122,5 +122,21 @@ def main():
     log.info("Removed Features majority MAD evaluation:")
     log.info("[Order from high to low mean importance]")
     log.info(removed_features_str)
+
+    clf = RandomForestClassifier(n_jobs=10, n_estimators=50)
+
+    selected_features = recursive_feature_selection_roc_auc(
+        clf,
+        X,
+        y,
+        n_features=len(training_variables)-np.sum(kept),
+        cv_steps=5,
+        n_jobs=2,
+        forward=True,
+        matching_features=False)
+    log.info("Removed Features majority MAD evaluation:")
+    log.info("[Order from high to low mean importance]")
+    log.info(removed_features_str)
+
 if __name__ == "__main__":
     main()
