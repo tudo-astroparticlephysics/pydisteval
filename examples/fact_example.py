@@ -73,19 +73,19 @@ training_variables = ['ConcCore',
                       'photonchargeMean',
                       ]
 
+
 def main():
     logging.captureWarnings(True)
-    logging.basicConfig(format=('%(asctime)s|%(name)s|%(levelname)s| ' +  '%(message)s'), level=logging.INFO)
+    logging.basicConfig(format=('%(asctime)s|%(name)s|%(levelname)s| ' +
+                        '%(message)s'), level=logging.INFO)
     log.info("Starting FACT example")
 
     data_df = pd.read_hdf(test_filename1)
     mc_df = pd.read_hdf(test_filename2)
 
-
     log.info("Reducing Features")
     data_df = data_df.loc[:, training_variables]
     mc_df = mc_df.loc[:, training_variables]
-
 
     clf = RandomForestClassifier(n_jobs=40, n_estimators=200)
 
@@ -98,29 +98,6 @@ def main():
                                                          )
     del data_df
     del mc_df
-
-    clf = RandomForestClassifier(n_jobs=10, n_estimators=50)
-
-    selected_features = disteval.recursive_feature_selection_roc_auc(
-        clf,
-        X,
-        y,
-        n_features=10,
-        cv_steps=5,
-        n_jobs=4,
-        forward=True,
-        matching_features=False)
-    for i in selected_features:
-        removed_features_str += '{}, '.format(X_names[i])
-    log.info("Features obtain via Forward Selection:")
-    log.info("[Order from early to late selection]")
-    log.info(removed_features_str)
-
-
-
-    exit()
-
-
 
     log.info("test classifiaction")
     clf, y_pred, cv_step = disteval.cv_test_ref_classification(
@@ -152,11 +129,13 @@ def main():
         clf,
         X,
         y,
-        n_features=len(training_variables) - np.sum(kept),
+        n_features=10,
         cv_steps=5,
         n_jobs=4,
         forward=True,
         matching_features=False)
+
+    removed_features_str = ''
     for i in selected_features:
         removed_features_str += '{}, '.format(X_names[i])
     log.info("Features obtain via Forward Selection:")

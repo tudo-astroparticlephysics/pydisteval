@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import warnings
+from concurrent.futures import ProcessPoolExecutor, wait
 
 import numpy as np
-import logging
-from concurrent.futures import ProcessPoolExecutor, wait
 
 try:
     from sklearn.model_selection import StratifiedKFold
@@ -26,7 +24,6 @@ def __single_auc_score__(feature_i,
         X_train = X[train_idx]
         X_test = X[test_idx]
         y_train = y[train_idx]
-        y_test = y[test_idx]
         if sample_weight is None:
             sample_weight_train = None
             sample_weight_test = None
@@ -36,7 +33,6 @@ def __single_auc_score__(feature_i,
         clf = clf.fit(X=X_train,
                       y=y_train,
                       sample_weight=sample_weight_train)
-        print('Trained')
     y_pred[test_idx] = clf.predict_proba(X_test)[:, 1]
     auc = roc_auc_score(y, y_pred, sample_weight=sample_weight_test)
     return (feature_i, auc)
@@ -136,7 +132,6 @@ def get_all_auc_scores(clf,
                                                X=X[:, test_set],
                                                y=y,
                                                sample_weight=sample_weight))
-            result = wait(futures)
         auc_scores = [future_i.result() for future_i in wait(futures).done]
     else:
         auc_scores = []
