@@ -73,29 +73,29 @@ training_variables = ['ConcCore',
                       'photonchargeMean',
                       ]
 
+
 def main():
     logging.captureWarnings(True)
-    logging.basicConfig(format=('%(asctime)s|%(name)s|%(levelname)s| ' +  '%(message)s'), level=logging.INFO)
+    logging.basicConfig(format=('%(asctime)s|%(name)s|%(levelname)s| ' +
+                        '%(message)s'), level=logging.INFO)
     log.info("Starting FACT example")
 
     data_df = pd.read_hdf(test_filename1)
     mc_df = pd.read_hdf(test_filename2)
 
-
     log.info("Reducing Features")
     data_df = data_df.loc[:, training_variables]
     mc_df = mc_df.loc[:, training_variables]
 
-
-    clf = RandomForestClassifier(n_jobs=30, n_estimators=200)
+    clf = RandomForestClassifier(n_jobs=40, n_estimators=200)
 
     log.info("Data preparation")
     X, y, sample_weight, X_names = disteval.prepare_data(mc_df,
-                                                data_df,
-                                                test_weight=None,
-                                                ref_weight=None,
-                                                test_ref_ratio=1.,
-                                                )
+                                                         data_df,
+                                                         test_weight=None,
+                                                         ref_weight=None,
+                                                         test_ref_ratio=1.,
+                                                         )
     del data_df
     del mc_df
 
@@ -122,5 +122,26 @@ def main():
     log.info("Removed Features majority MAD evaluation:")
     log.info("[Order from high to low mean importance]")
     log.info(removed_features_str)
+
+    clf = RandomForestClassifier(n_jobs=10, n_estimators=50)
+
+    selected_features, _ = disteval.recursive_feature_selection_roc_auc(
+        clf,
+        X,
+        y,
+        n_features=10,
+        cv_steps=5,
+        n_jobs=4,
+        forward=True,
+        matching_features=False)
+
+    removed_features_str = ''
+    for i in selected_features:
+        removed_features_str += '{}, '.format(X_names[i])
+    log.info("Features obtain via Forward Selection:")
+    log.info("[Order from early to late selection]")
+    log.info(removed_features_str)
+
+
 if __name__ == "__main__":
     main()
