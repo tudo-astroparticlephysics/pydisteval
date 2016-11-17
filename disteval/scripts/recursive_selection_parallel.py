@@ -41,7 +41,7 @@ def __single_auc_score__(feature_i,
         Array of the true labels.
 
     sample_weight : None or numpy.float32array, shape=(n_samples)
-        If weights are used this has to contains the sample weights.
+        If weights are used this has to contain the sample weights.
         None in the case of no weights.
 
     Returns
@@ -81,7 +81,7 @@ def get_all_auc_scores(clf,
                        n_jobs=1,
                        forward=True):
     """Method determining the 'area under curve' for all not yet
-    selected feautres. In this function also the feature sets for the
+    selected features. In this function also the feature sets for the
     tests are created.
     Parameters
     ----------
