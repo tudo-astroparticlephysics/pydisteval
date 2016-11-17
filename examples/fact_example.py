@@ -125,7 +125,7 @@ def main():
 
     clf = RandomForestClassifier(n_jobs=10, n_estimators=50)
 
-    selected_features = disteval.recursive_feature_selection_roc_auc(
+    selected_features, _ = disteval.recursive_feature_selection_roc_auc(
         clf,
         X,
         y,

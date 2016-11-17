@@ -196,6 +196,10 @@ def recursive_feature_selection_roc_auc(clf,
         Return a list containing the indeces of X, that were
         selected/eliminated. The order corresponds to the order the
         features were selected/eliminated.
+
+    auc_scores: np.array float shape(n_features_total, n_features)
+        Return a array containing the auc values for all steps.
+        np.nan is the feature was already selected in the specific run.
     """
     desired_characteristics = ClassifierCharacteristics()
     desired_characteristics.opts['callable:fit'] = True
@@ -204,19 +208,28 @@ def recursive_feature_selection_roc_auc(clf,
     clf_characteristics = ClassifierCharacteristics(clf)
     assert clf_characteristics.fulfilling(desired_characteristics), \
         'Classifier sanity check failed!'
+
+    if n_features > X.shape[1]:
+        log.info(' \'n_features\' higher than total number of features.'
+                 ' \'n_features\' reduced!')
+        n_features = X.shape[1]
+    auc_scores = np.zeros((X.shape[1], n_features))
     selected_features = []
+
     while len(selected_features) != n_features:
-        auc_scores = get_all_auc_scores(clf,
-                                        selected_features,
-                                        X,
-                                        y,
-                                        sample_weight=sample_weight,
-                                        cv_steps=cv_steps,
-                                        n_jobs=n_jobs,
-                                        forward=forward)
+        auc_scores_i = get_all_auc_scores(clf,
+                                          selected_features,
+                                          X,
+                                          y,
+                                          sample_weight=sample_weight,
+                                          cv_steps=cv_steps,
+                                          n_jobs=n_jobs,
+                                          forward=forward)
         value_best = None
         index_best = None
-        for idx, auc in auc_scores:
+        for idx, auc in enumerate(auc_scores_i):
+            if not np.isfinite(auc):
+                continue
             if value_best is None:
                 value_best = auc
                 index_best = idx
@@ -238,8 +251,9 @@ def recursive_feature_selection_roc_auc(clf,
                     if auc < value_best:
                         value_best = auc
                         index_best = idx
+        auc_scores[:, len(selected_features)] = auc_scores_i
         selected_features.append(index_best)
-    return selected_features
+    return selected_features, auc_scores
 
 
 

@@ -19,6 +19,40 @@ def __single_auc_score__(feature_i,
                          X,
                          y,
                          sample_weight=None):
+    """Method determining the 'area under curve' for a single test set.
+    This function is intended for internal use.
+    Parameters
+    ----------
+    feature_i: int
+        Index of the tested feature.
+
+    clf: object
+        Classifier that should be used for the classification.
+        It needs a fit and a predict_proba function.
+
+    cv_indices: list of tuples
+        Indices for all the cross validation steps. They are explicit
+        pass, so all test sets use the same splitting.
+
+    X : numpy.float32array, shape=(n_samples, n_obs)
+        Values describing the samples.
+
+    y : numpy.float32array, shape=(n_samples)
+        Array of the true labels.
+
+    sample_weight : None or numpy.float32array, shape=(n_samples)
+        If weights are used this has to contains the sample weights.
+        None in the case of no weights.
+
+    Returns
+    -------
+    feature_i: int
+        Index of the tested feature. It is need as a return value for
+        asynchronous parallel processing
+
+    auc_score: float
+        Returns calculated auc score.
+    """
     y_pred = np.zeros_like(y, dtype=float)
     for i, [train_idx, test_idx] in enumerate(cv_indices):
         X_train = X[train_idx]
@@ -34,8 +68,8 @@ def __single_auc_score__(feature_i,
                       y=y_train,
                       sample_weight=sample_weight_train)
     y_pred[test_idx] = clf.predict_proba(X_test)[:, 1]
-    auc = roc_auc_score(y, y_pred, sample_weight=sample_weight_test)
-    return (feature_i, auc)
+    auc_score = roc_auc_score(y, y_pred, sample_weight=sample_weight_test)
+    return feature_i, auc_score
 
 
 def get_all_auc_scores(clf,
@@ -46,7 +80,9 @@ def get_all_auc_scores(clf,
                        cv_steps=10,
                        n_jobs=1,
                        forward=True):
-    """Method determining the 'area under curve' for
+    """Method determining the 'area under curve' for all not yet
+    selected feautres. In this function also the feature sets for the
+    tests are created.
     Parameters
     ----------
     clf: object
@@ -77,9 +113,9 @@ def get_all_auc_scores(clf,
 
     Returns
     -------
-    auc_scores: list of tuples (feature_i, auc)
-        Return a list of tuples containing the feature index and the
-        auc score.
+    auc_scores: np.array float shape(n_features_total)
+        Return a array containing the auc values. np.nan is the feature
+        is already selected.
     """
     selected_features = np.array(selected_features, dtype=int)
     if cv_steps < 2:
@@ -121,6 +157,8 @@ def get_all_auc_scores(clf,
             set_i.remove(feature_i)
             test_sets[feature_i] = np.array(set_i)
 
+    auc_scores = np.empty(X.shape[1])
+    auc_scores[:] = np.nan
     if n_jobs > 1:
         futures = []
         with ProcessPoolExecutor(max_workers=n_jobs) as executor:
@@ -132,15 +170,18 @@ def get_all_auc_scores(clf,
                                                X=X[:, test_set],
                                                y=y,
                                                sample_weight=sample_weight))
-        auc_scores = [future_i.result() for future_i in wait(futures).done]
+        results = wait(futures)
+        for future_i in results.done:
+            feature_i, auc = future_i.result()
+            auc_scores[feature_i] = auc
     else:
         auc_scores = []
         for feature_i, test_set in test_sets.items():
-            auc_scores.append(
-                __single_auc_score__(feature_i=feature_i,
-                                     clf=clf,
-                                     cv_indices=cv_indices,
-                                     X=X[:, test_set],
-                                     y=y,
-                                     sample_weight=sample_weight))
+            _, auc = __single_auc_score__(feature_i=feature_i,
+                                                  clf=clf,
+                                                  cv_indices=cv_indices,
+                                                  X=X[:, test_set],
+                                                  y=y,
+                                                  sample_weight=sample_weight)
+            auc_scores[feature_i] = auc
     return auc_scores
