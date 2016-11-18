@@ -5,7 +5,9 @@ Collection of methods to evaluate the results of disteval functions
 
 import numpy as np
 
-from scipy.stats import norm
+from scipy.stats import norm, ks_2samp
+from sklearn.metrics import roc_curve
+
 from ..scripts.classifier_characteristics import ClassifierCharacteristics
 
 def feature_importance_mad(clf, alpha=0.05):
@@ -136,3 +138,107 @@ def feature_importance_mad_majority(clfs, ratio=0.9, alpha=0.10):
     feature_importance_std = np.std(feature_importances, axis=0, ddof=1)
     kept = np.sum(kept_arr, axis=0) >= ratio*kept_arr.shape[0]
     return kept, feature_importance, feature_importance_std
+
+
+def roc_curve_equivalence_ks_test(y_pred_a,
+                                  y_pred_b,
+                                  y_true,
+                                  y_true_b=None,
+                                  alpha=0.05):
+    """Function evaluating the equivalence between the ROC curves of
+    two classifier. The method is described by Andrew P. Bradley in
+    "ROC curve equivalence using the Kolmogorov-Smirnov test"
+    DOI: 10.1016/j.patrec.2012.12.021
+
+    Parameters
+    ----------
+    y_pred_a: numpy.array, shape=(n_samples_a)
+        Predictions of classifier a
+
+    y_pred_b: numpy.array, shape=(n_samples_b)
+        Predictions of classifier b. If y_true_b is not provided, the
+        sample must be of the same length as sample a
+
+    y_true : numpy.array, shape=(n_samples_a)
+        True labels for sample_a. If y_true_b is not provided, it is
+        also used as the true labels for sample b
+
+    y_true_b : None numpy.array, shape=(n_samples_b), optional
+        True labels for sample_b. If None y_true_a is used as labels for
+        sample b.
+
+    alpha : float, optional (default=0.05)
+        Significance for the Kolmogorov Smirnov test.
+
+    Returns
+    -------
+    passed: bool
+        True if test is accepted. False if the test is rejected. A
+        rejection has the error rate alpha.
+
+    op_point_a: numpy.array, shape=(2)
+        [False positive rate, True positive rate] Rate at the operation
+        points of both KS test for sample a.
+
+    op_point_b: numpy.array, shape=(2)
+        [False positive rate, True positive rate] Rate at the operation
+        points of both KS test for sample b.
+
+    fpr_b: numpy.array
+        False positive rate for sample b at the thresholds.
+
+    tpr_b: numpy.array
+        True positive rate for sample b at the thresholds.
+
+    threshold: numpy.array
+        Thresholds to the false/true positive rates.
+    """
+
+    bincount_y = np.bincount(y_true)
+    samples_positive = bincount_y[1]
+    samples_negative = bincount_y[0]
+
+    fpr_a, tpr_a, thresholds_a = roc_curve(y_true,
+                                           y_pred_a,
+                                           drop_intermediate=False)
+    fpr_b, tpr_b, thresholds_b = roc_curve(y_true,
+                                           y_pred_b,
+                                           drop_intermediate=False)
+
+    thresholds = np.sort(np.unique(np.hstack((thresholds_a, thresholds_b))))
+    thresholds = thresholds[::-1]
+    fpr_a_full = np.zeros_like(thresholds)
+    tpr_a_full = np.zeros_like(thresholds)
+    fpr_b_full = np.zeros_like(thresholds)
+    tpr_b_full = np.zeros_like(thresholds)
+    pointer_a = -1
+    pointer_b = -1
+    for i, t_i in enumerate(thresholds):
+        if t_i == thresholds_a[pointer_a+1]:
+            pointer_a += 1
+        if t_i == thresholds_b[pointer_b+1]:
+            pointer_a += 1
+        fpr_a_full[i] = fpr_a[pointer_a]
+        tpr_a_full[i] = tpr_a[pointer_a]
+        fpr_b_full[i] = fpr_b[pointer_b]
+        tpr_b_full[i] = tpr_b[pointer_b]
+
+    D_n = np.absolute(fpr_a - fpr_b)
+    D_p = np.absolute(tpr_a - fpr_t)
+
+    operation_point_n = np.argmax(D_n)
+    max_D_n = D_n[operation_point_n]
+    operation_point_p = np.argmax(D_p)
+    max_D_p = D_p[operation_point_p]
+
+    op_point_a = [fpr_a[operation_point_n], tpr_a[operation_point_p]]
+    op_point_b = [fpr_b[operation_point_n], tpr_b[operation_point_p]]
+
+    critical_value = np.sqrt((len(2. / alpha) / 2))
+    passed_test = lambda n,d: np.sqrt(n**2 / (2*n)) * d > critical_value
+
+    passed = np.logical(passed_test(samples_positive, D_p),
+                        passed_test(samples_negative, D_n))
+
+    return passed, op_point_a, op_point_b, \
+        fpr_a, tpr_a, fpr_b, tpr_b, thresholds
