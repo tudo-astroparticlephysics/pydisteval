@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 
 import logging
 
@@ -78,13 +79,15 @@ def main():
     logging.captureWarnings(True)
     logging.basicConfig(format=('%(asctime)s|%(name)s|%(levelname)s| ' +
                         '%(message)s'), level=logging.INFO)
-    log.info("Starting FACT example")
+    log.info("Starting ROC comparison example with FACT data")
 
     data_df = pd.read_hdf(test_filename1)
     mc_df = pd.read_hdf(test_filename2)
+    alpha = 0.05
+
 
     log.info("Reducing Features")
-    data_df = data_df.loc[:, training_variables]
+    data_df = data_df.loc[10000, training_variables]
     mc_df = mc_df.loc[:, training_variables]
 
     clf = RandomForestClassifier(n_jobs=40, n_estimators=200)
@@ -99,49 +102,36 @@ def main():
     del data_df
     del mc_df
 
-    log.info("test classifiaction")
-    clf, y_pred, cv_step = disteval.cv_test_ref_classification(
-        clf, X, y, sample_weight, cv_steps=10, return_all_models=True)
+    log.info("Real classifiaction")
+    clf, y_pred_a, cv_step = disteval.cv_test_ref_classification(
+        clf, X, y, sample_weight, cv_steps=10, return_all_models=False)
 
-    kept, mean_imp, std_imp = eval.feature_importance_mad(clf, alpha=0.05)
-    removed_features_str = ''
-    for i in np.argsort(mean_imp)[::-1]:
-        if not kept[i]:
-            removed_features_str += '{}, '.format(X_names[i])
-
-    log.info("Removed Features MAD evaluation:")
-    log.info("[Order from high to low mean importance]")
-    log.info(removed_features_str)
-
-    kept, mean_imp, std_imp = eval.feature_importance_mad_majority(
-        clf, ratio=0.9, alpha=0.10)
-    removed_features_str = ''
-    for i in np.argsort(mean_imp)[::-1]:
-        if not kept[i]:
-            removed_features_str += '{}, '.format(X_names[i])
-    log.info("Removed Features majority MAD evaluation:")
-    log.info("[Order from high to low mean importance]")
-    log.info(removed_features_str)
-
-    clf = RandomForestClassifier(n_jobs=10, n_estimators=50)
-
-    selected_features, _ = disteval.recursive_feature_selection_roc_auc(
-        clf,
-        X,
-        y,
-        n_features=10,
-        cv_steps=5,
-        n_jobs=4,
-        forward=True,
-        matching_features=False)
-
-    removed_features_str = ''
-    for i in selected_features:
-        removed_features_str += '{}, '.format(X_names[i])
-    log.info("Features obtain via Forward Selection:")
-    log.info("[Order from early to late selection]")
-    log.info(removed_features_str)
-
+    log.info("Classifiaction with random label (Guessing clf)")
+    y_fake = np.random.randint(0, 2, size=X.shape[0])
+    clf, y_pred_b, cv_step = disteval.cv_test_ref_classification(
+        clf, X, y_fake, sample_weight, cv_steps=10, return_all_models=False)
+    log.info("Running ROC curve equivalence test")
+    roc_eval_result = eval.roc_curve_equivalence_ks_test(y_pred_a,
+                                                         y_pred_b,
+                                                         y,
+                                                         alpha=alpha)
+    if roc_eval_result[0]:
+        log.info("The test was not rejected!")
+    else:
+        log.info("The test was rejected! (alpha={})".format(alpha))
+    log.info("Second guessing classifier is trained")
+    y_fake_c = np.random.randint(0, 2, size=X.shape[0])
+    clf, y_pred_c, cv_step = disteval.cv_test_ref_classification(
+        clf, X, y_fake_c, sample_weight, cv_steps=10, return_all_models=False)
+    log.info("Running ROC curve equivalence test for both guessing clf")
+    roc_eval_result = eval.roc_curve_equivalence_ks_test(y_pred_a,
+                                                         y_pred_b,
+                                                         y,
+                                                         alpha=alpha)
+    if roc_eval_result[0]:
+        log.info("The test was not rejected!")
+    else:
+        log.info("The test was rejected! (alpha={})".format(alpha))
 
 if __name__ == "__main__":
     main()
