@@ -5,12 +5,8 @@ from logging import getLogger
 import numpy as np
 from tqdm import tqdm
 
-try:
-    from sklearn.model_selection import StratifiedKFold
-    old_kfold = False
-except ImportError:
-    from sklearn.cross_validation import StratifiedKFold
-    old_kfold = True
+
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc
 
 from .scripts.classifier_characteristics import ClassifierCharacteristics
@@ -86,13 +82,9 @@ def cv_test_ref_classification(clf,
         return clf, None, None
 
     else:
-        if old_kfold:
-            cv_iterator = StratifiedKFold(y, n_folds=cv_steps,
-                                          shuffle=True)
-        else:
-            strat_kfold = StratifiedKFold(n_splits=cv_steps,
-                                          shuffle=True)
-            cv_iterator = strat_kfold.split(X, y)
+        strat_kfold = StratifiedKFold(n_splits=cv_steps,
+                                      shuffle=True)
+        cv_iterator = strat_kfold.split(X, y)
         y_pred = np.zeros_like(y, dtype=float)
         cv_step = np.zeros_like(y, dtype=int)
         if return_all_models:

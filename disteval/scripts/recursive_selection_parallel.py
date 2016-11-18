@@ -4,12 +4,8 @@ from concurrent.futures import ProcessPoolExecutor, wait
 
 import numpy as np
 
-try:
-    from sklearn.model_selection import StratifiedKFold
-    old_kfold = False
-except ImportError:
-    from sklearn.cross_validation import StratifiedKFold
-    old_kfold = True
+
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
 
 
@@ -121,15 +117,8 @@ def get_all_auc_scores(clf,
     if cv_steps < 2:
         raise ValueError('\'cv_steps\' must be 2 or higher')
     else:
-        if old_kfold:
-            cv_iterator = StratifiedKFold(y, n_folds=cv_steps,
-                                          shuffle=True)
-            cv_indices = [[train, test] for train, test in cv_iterator]
-        else:
-            strat_kfold = StratifiedKFold(n_splits=cv_steps,
-                                          shuffle=True)
-            cv_iterator = strat_kfold.split(X, y)
-            cv_indices = [[train, test] for train, test in cv_iterator]
+        cv_iterator = strat_kfold.split(X, y)
+        cv_indices = [[train, test] for train, test in cv_iterator]
     test_features = np.array([int(i) for i in range(X.shape[1])
                               if i not in selected_features], dtype=int)
 
