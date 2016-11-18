@@ -153,11 +153,13 @@ def roc_curve_equivalence_ks_test(y_pred_a,
     Parameters
     ----------
     y_pred_a: numpy.array, shape=(n_samples_a)
-        Predictions of classifier a
+        Predictions of classifier a. The predictions are expected to be
+        between [0, 1].
 
     y_pred_b: numpy.array, shape=(n_samples_b)
-        Predictions of classifier b. If y_true_b is not provided, the
-        sample must be of the same length as sample a
+        Predictions of classifier b. he predictions are expected to be
+        between [0, 1]. If y_true_b is not provided, the
+        sample must be of the same length as sample a.
 
     y_true : numpy.array, shape=(n_samples_a)
         True labels for sample_a. If y_true_b is not provided, it is
@@ -176,11 +178,11 @@ def roc_curve_equivalence_ks_test(y_pred_a,
         True if test is accepted. False if the test is rejected. A
         rejection has the error rate alpha.
 
-    op_point_a: numpy.array, shape=(2)
+    op_point_a: numpy.array, shape=(2,2)
         [False positive rate, True positive rate] Rate at the operation
         points of both KS test for sample a.
 
-    op_point_b: numpy.array, shape=(2)
+    op_point_b: numpy.array, shape=(2,2)
         [False positive rate, True positive rate] Rate at the operation
         points of both KS test for sample b.
 
@@ -195,50 +197,65 @@ def roc_curve_equivalence_ks_test(y_pred_a,
     """
 
     bincount_y = np.bincount(y_true)
-    samples_positive = bincount_y[1]
-    samples_negative = bincount_y[0]
+    num_positive_a = bincount_y[1]
+    num_negative_a = bincount_y[0]
+    if y_true_b is not None:
+        bincount_y = np.bincount(y_true_b)
+        num_positive_b = bincount_y[1]
+        num_negative_b = bincount_y[0]
+    else:
+        num_positive_b = num_positive_a
+        num_negative_b = num_negative_a
 
     fpr_a, tpr_a, thresholds_a = roc_curve(y_true,
                                            y_pred_a,
-                                           drop_intermediate=False)
+                                           drop_intermediate=True)
     fpr_b, tpr_b, thresholds_b = roc_curve(y_true,
                                            y_pred_b,
-                                           drop_intermediate=False)
+                                           drop_intermediate=True)
 
     thresholds = np.sort(np.unique(np.hstack((thresholds_a, thresholds_b))))
     thresholds = thresholds[::-1]
-    fpr_a_full = np.zeros_like(thresholds)
-    tpr_a_full = np.zeros_like(thresholds)
-    fpr_b_full = np.zeros_like(thresholds)
-    tpr_b_full = np.zeros_like(thresholds)
+    fpr_a_full = np.ones_like(thresholds)
+    tpr_a_full = np.ones_like(thresholds)
+    fpr_b_full = np.ones_like(thresholds)
+    tpr_b_full = np.ones_like(thresholds)
     pointer_a = -1
     pointer_b = -1
+
     for i, t_i in enumerate(thresholds):
-        if t_i == thresholds_a[pointer_a+1]:
-            pointer_a += 1
-        if t_i == thresholds_b[pointer_b+1]:
-            pointer_a += 1
+        if pointer_a+1 < len(thresholds_a):
+            if t_i == thresholds_a[pointer_a+1]:
+                pointer_a += 1
+        if pointer_b+1 < len(thresholds_b):
+            if t_i == thresholds_b[pointer_b+1]:
+                pointer_b += 1
         fpr_a_full[i] = fpr_a[pointer_a]
         tpr_a_full[i] = tpr_a[pointer_a]
         fpr_b_full[i] = fpr_b[pointer_b]
         tpr_b_full[i] = tpr_b[pointer_b]
+    print(fpr_a_full)
+    print(tpr_a_full)
 
-    D_n = np.absolute(fpr_a - fpr_b)
-    D_p = np.absolute(tpr_a - fpr_t)
+    D_n = np.absolute(fpr_a_full - fpr_b_full)
+    D_p = np.absolute(tpr_a_full - tpr_b_full)
 
-    operation_point_n = np.argmax(D_n)
-    max_D_n = D_n[operation_point_n]
-    operation_point_p = np.argmax(D_p)
-    max_D_p = D_p[operation_point_p]
+    idx_max_n = np.argmax(D_n)
+    max_D_n = D_n[idx_max_n]
+    idx_max_p = np.argmax(D_p)
+    max_D_p = D_p[idx_max_p]
 
-    op_point_a = [fpr_a[operation_point_n], tpr_a[operation_point_p]]
-    op_point_b = [fpr_b[operation_point_n], tpr_b[operation_point_p]]
+    op_point_n = np.array([[fpr_a_full[idx_max_n], fpr_b_full[idx_max_n]],
+                           [tpr_a_full[idx_max_n], tpr_b_full[idx_max_n]]])
+    op_point_p = np.array([[fpr_a_full[idx_max_p], fpr_b_full[idx_max_p]],
+                           [tpr_a_full[idx_max_p], tpr_b_full[idx_max_p]]])
 
-    critical_value = np.sqrt((len(2. / alpha) / 2))
-    passed_test = lambda n,d: np.sqrt(n**2 / (2*n)) * d > critical_value
+    critical_value = np.sqrt((2. / alpha) / 2)
+    passed_test = lambda n,m,d: np.sqrt(n*m / (n + m)) * d > critical_value
 
-    passed = np.logical(passed_test(samples_positive, D_p),
-                        passed_test(samples_negative, D_n))
+    passed = np.logical_and(
+        passed_test(num_positive_a, num_positive_b, max_D_p),
+        passed_test(num_negative_a, num_negative_b, max_D_n))
 
-    return passed, op_point_a, op_point_b, \
-        fpr_a, tpr_a, fpr_b, tpr_b, thresholds
+    return passed, op_point_n, op_point_p, \
+        fpr_a_full, tpr_a_full, fpr_b_full, tpr_b_full, thresholds
