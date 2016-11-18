@@ -5,10 +5,11 @@ Collection of methods to evaluate the results of disteval functions
 
 import numpy as np
 
-from scipy.stats import norm, ks_2samp
+from scipy.stats import norm
 from sklearn.metrics import roc_curve
 
 from ..scripts.classifier_characteristics import ClassifierCharacteristics
+
 
 def feature_importance_mad(clf, alpha=0.05):
     """This function fetches the feature importance values and runs a
@@ -136,7 +137,7 @@ def feature_importance_mad_majority(clfs, ratio=0.9, alpha=0.10):
     feature_importances = np.array(feature_importances)
     feature_importance = np.mean(feature_importances, axis=0)
     feature_importance_std = np.std(feature_importances, axis=0, ddof=1)
-    kept = np.sum(kept_arr, axis=0) >= ratio*kept_arr.shape[0]
+    kept = np.sum(kept_arr, axis=0) >= ratio * kept_arr.shape[0]
     return kept, feature_importance, feature_importance_std
 
 
@@ -224,18 +225,16 @@ def roc_curve_equivalence_ks_test(y_pred_a,
     pointer_b = -1
 
     for i, t_i in enumerate(thresholds):
-        if pointer_a+1 < len(thresholds_a):
-            if t_i == thresholds_a[pointer_a+1]:
+        if pointer_a + 1 < len(thresholds_a):
+            if t_i == thresholds_a[pointer_a + 1]:
                 pointer_a += 1
-        if pointer_b+1 < len(thresholds_b):
-            if t_i == thresholds_b[pointer_b+1]:
+        if pointer_b + 1 < len(thresholds_b):
+            if t_i == thresholds_b[pointer_b + 1]:
                 pointer_b += 1
         fpr_a_full[i] = fpr_a[pointer_a]
         tpr_a_full[i] = tpr_a[pointer_a]
         fpr_b_full[i] = fpr_b[pointer_b]
         tpr_b_full[i] = tpr_b[pointer_b]
-    print(fpr_a_full)
-    print(tpr_a_full)
 
     D_n = np.absolute(fpr_a_full - fpr_b_full)
     D_p = np.absolute(tpr_a_full - tpr_b_full)
@@ -250,8 +249,8 @@ def roc_curve_equivalence_ks_test(y_pred_a,
     op_point_p = np.array([[fpr_a_full[idx_max_p], fpr_b_full[idx_max_p]],
                            [tpr_a_full[idx_max_p], tpr_b_full[idx_max_p]]])
 
-    critical_value = np.sqrt((2. / alpha) / 2)
-    passed_test = lambda n,m,d: np.sqrt(n*m / (n + m)) * d > critical_value
+    critical_value = np.sqrt((2. / np.sqrt(alpha)) / 2)
+    passed_test = lambda n, m, d: np.sqrt(n * m / (n + m)) * d > critical_value
 
     passed = np.logical_and(
         passed_test(num_positive_a, num_positive_b, max_D_p),
