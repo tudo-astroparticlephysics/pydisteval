@@ -216,7 +216,17 @@ def roc_curve_equivalence_ks_test(y_pred_a,
                                            drop_intermediate=True)
 
     thresholds = np.sort(np.unique(np.hstack((thresholds_a, thresholds_b))))
-    thresholds = thresholds[::-1]
+
+    order_a = np.argsort(thresholds_a)
+    thresholds_a = thresholds_a[order_a]
+    fpr_a = fpr_a[order_a]
+    tpr_a = tpr_a[order_a]
+
+    order_b = np.argsort(thresholds_b)
+    thresholds_b = thresholds_b[order_b]
+    fpr_b = fpr_b[order_b]
+    tpr_b = tpr_b[order_b]
+
     fpr_a_full = np.ones_like(thresholds)
     tpr_a_full = np.ones_like(thresholds)
     fpr_b_full = np.ones_like(thresholds)
@@ -228,13 +238,26 @@ def roc_curve_equivalence_ks_test(y_pred_a,
         if pointer_a + 1 < len(thresholds_a):
             if t_i == thresholds_a[pointer_a + 1]:
                 pointer_a += 1
+            fpr_a_full[i] = fpr_a[pointer_a]
+            tpr_a_full[i] = tpr_a[pointer_a]
+            if pointer_a == -1:
+                fpr_a_full[i] = 1.
+                tpr_a_full[i] = 1.
+        else:
+            fpr_a_full[i] = 0.
+            tpr_a_full[i] = 0.
+
         if pointer_b + 1 < len(thresholds_b):
             if t_i == thresholds_b[pointer_b + 1]:
                 pointer_b += 1
-        fpr_a_full[i] = fpr_a[pointer_a]
-        tpr_a_full[i] = tpr_a[pointer_a]
-        fpr_b_full[i] = fpr_b[pointer_b]
-        tpr_b_full[i] = tpr_b[pointer_b]
+            fpr_b_full[i] = fpr_b[pointer_b]
+            tpr_b_full[i] = tpr_b[pointer_b]
+            if pointer_b == -1:
+                fpr_b_full[i] = 1.
+                tpr_b_full[i] = 1.
+        else:
+            fpr_b_full[i] = 0.
+            tpr_b_full[i] = 0.
 
     D_n = np.absolute(fpr_a_full - fpr_b_full)
     D_p = np.absolute(tpr_a_full - tpr_b_full)
@@ -250,7 +273,7 @@ def roc_curve_equivalence_ks_test(y_pred_a,
                            [tpr_a_full[idx_max_p], tpr_b_full[idx_max_p]]])
 
     critical_value = np.sqrt((2. / np.sqrt(alpha)) / 2)
-    passed_test = lambda n, m, d: np.sqrt(n * m / (n + m)) * d > critical_value
+    passed_test = lambda n, m, d: np.sqrt(n * m / (n + m)) * d <= critical_value
 
     passed = np.logical_and(
         passed_test(num_positive_a, num_positive_b, max_D_p),
