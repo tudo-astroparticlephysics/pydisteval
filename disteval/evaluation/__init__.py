@@ -2,7 +2,6 @@
 """
 Collection of methods to evaluate the results of disteval functions
 """
-
 import numpy as np
 
 from scipy.stats import norm
@@ -69,14 +68,13 @@ def feature_importance_mad(clf, alpha=0.05):
         feature_importance = np.mean(feature_importances, axis=0)
         feature_importance_std = np.std(feature_importances, axis=0, ddof=1)
     else:
-        got_single_clf = True
         clf_characteristics = ClassifierCharacteristics(clf)
         assert clf_characteristics.fulfilling(desired_characteristics), \
             'Classifier sanity check failed!'
         feature_importance = clf.feature_importances_
         feature_importance_std = np.NaN
 
-    threshold = norm.ppf(1 - alpha/2) * 1.4826 # see docstring
+    threshold = norm.ppf(1 - alpha/2) * 1.4826  # see docstring
     median_importance = np.median(feature_importance)
     MAD = np.median(np.absolute(feature_importance - median_importance))
     diff = feature_importance - median_importance
@@ -272,12 +270,15 @@ def roc_curve_equivalence_ks_test(y_pred_a,
     op_point_p = np.array([[fpr_a_full[idx_max_p], fpr_b_full[idx_max_p]],
                            [tpr_a_full[idx_max_p], tpr_b_full[idx_max_p]]])
 
-    critical_value = np.sqrt((2. / np.sqrt(alpha)) / 2)
-    passed_test = lambda n, m, d: np.sqrt(n * m / (n + m)) * d <= critical_value
+    critical_value = np.sqrt(np.log(2. / np.sqrt(alpha)) / 2)
 
-    passed = np.logical_and(
-        passed_test(num_positive_a, num_positive_b, max_D_p),
-        passed_test(num_negative_a, num_negative_b, max_D_n))
+    def passed_test(n, m, d):
+        return np.sqrt(n * m / (n + m)) * d <= critical_value
+
+    passed_pos = passed_test(num_positive_a, num_positive_b, max_D_p)
+    passed_neg = passed_test(num_negative_a, num_negative_b, max_D_n)
+
+    passed = np.logical_and(passed_pos, passed_neg)
 
     return passed, op_point_n, op_point_p, \
         fpr_a_full, tpr_a_full, fpr_b_full, tpr_b_full, thresholds

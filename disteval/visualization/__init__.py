@@ -7,6 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 
+
 def visualize_roc_curve_equivalence_test(return_list,
                                          name_a='Reference',
                                          name_b='Test',
@@ -42,7 +43,7 @@ def visualize_roc_curve_equivalence_test(return_list,
     axes: list of matplotlib.axis (len=3)
         The created axes.
     """
-    passed = return_list[0]
+
     op_point_n = return_list[1]
     op_point_p = return_list[2]
     fpr_a_full = return_list[3]
@@ -69,7 +70,6 @@ def visualize_roc_curve_equivalence_test(return_list,
     ax1.set_xlabel('False Positive Rate (FPR)')
     ax1.legend(loc=4)
 
-
     D_n = np.absolute(fpr_a_full - fpr_b_full)
     D_p = np.absolute(tpr_a_full - tpr_b_full)
 
@@ -87,7 +87,7 @@ def visualize_roc_curve_equivalence_test(return_list,
              [fpr_a_full[idx_max_n], fpr_b_full[idx_max_n]], 'bo')
     ax2.set_ylabel('FPR')
     ax2.set_ylim([0., 1.05])
-    ax2.set_xlim([0.,1.])
+    ax2.set_xlim([0., 1.])
     ax2.set_xticklabels([])
 
     ax3.plot([thresholds[idx_max_p], thresholds[idx_max_p]],
@@ -101,10 +101,10 @@ def visualize_roc_curve_equivalence_test(return_list,
              [tpr_a_full[idx_max_p], tpr_b_full[idx_max_p]], 'gx')
     ax3.set_ylabel('TPR')
     ax3.set_ylim([0., 1.05])
-    ax3.set_xlim([0.,1.])
+    ax3.set_xlim([0., 1.])
     ax3.set_xlabel('Threshold')
     if save_path == 'show':
         plt.show()
-    elif sabe_path is not None:
+    elif save_path is not None:
         plt.savefig(save_path)
     return fig, (ax1, ax2, ax3)

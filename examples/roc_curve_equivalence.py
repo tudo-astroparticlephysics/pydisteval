@@ -1,10 +1,10 @@
-import numpy as np
-import pandas as pd
-import matplotlib
-matplotlib.use('Agg')
-from matplotlib import pyplot as plt
-
+# -*- coding:utf-8 -*-
+'''Example usage of the 'roc_curve_equivalence_ks_test' and the
+'visualize_roc_curve_equivalence_test'
+'''
 import logging
+import matplotlib
+import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
@@ -14,6 +14,8 @@ from disteval import evaluation as eval
 from disteval import visualization as visu
 
 log = logging.getLogger("disteval.fact_example")
+matplotlib.use('Agg')
+
 
 def main():
     logging.captureWarnings(True)
@@ -38,7 +40,7 @@ def main():
     clf, y_pred_guess, cv_step = disteval.cv_test_ref_classification(
         clf, X, y_fake, sample_weight, cv_steps=10, return_all_models=False)
     log.info("Running ROC curve equivalence test")
-    roc_eval_result = eval.roc_curve_equivalence_ks_test(                                                     y_pred_a,
+    roc_eval_result = eval.roc_curve_equivalence_ks_test(y_pred_a,
                                                          y_pred_guess,
                                                          y,
                                                          alpha=alpha)
@@ -49,6 +51,7 @@ def main():
 
     visu.visualize_roc_curve_equivalence_test(roc_eval_result,
                                               save_path='real_guessing.png')
+
 
 if __name__ == "__main__":
     main()
