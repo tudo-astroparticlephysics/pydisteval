@@ -105,6 +105,6 @@ def visualize_roc_curve_equivalence_test(return_list,
     ax3.set_xlabel('Threshold')
     if save_path == 'show':
         plt.show()
-    elif sabe_path is not None:
+    elif save_path is not None:
         plt.savefig(save_path)
     return fig, (ax1, ax2, ax3)
