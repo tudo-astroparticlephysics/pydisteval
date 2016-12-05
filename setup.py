@@ -73,7 +73,7 @@ setup(
             'pandas',           # in anaconda
             'numpy',            # in anaconda
             'matplotlib>=1.4',  # in anaconda
-            'sklearn-pandas',
+#            'sklearn-pandas',
             'sklearn',           # in anaconda
             'tables',
             'tqdm',
