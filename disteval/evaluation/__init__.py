@@ -166,7 +166,7 @@ def roc_curve_equivalence_ks_test(y_pred_a,
         also used as the true labels for sample b
 
     y_true_b : None numpy.array, shape=(n_samples_b), optional
-        True labels for sample_b. If None y_true_a is used as labels for
+        True labels for sample_b. If None y_true is used as labels for
         sample b.
 
     alpha : float, optional (default=0.05)
@@ -207,7 +207,7 @@ def roc_curve_equivalence_ks_test(y_pred_a,
         num_positive_b = bincount_y[1]
         num_negative_b = bincount_y[0]
     else:
-        y_true_b = y_true_a
+        y_true_b = y_true
         num_positive_b = num_positive_a
         num_negative_b = num_negative_a
     if scale:
