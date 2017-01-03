@@ -12,7 +12,7 @@ def visualize_feature_importance_mad(return_list,
                                      annoting_text='auto',
                                      manual_x_lims=None,
                                      save_path=None,
-                                     fig_size=(8, 10),):
+                                     fig_size=(12, 10)):
     """Function visualizing the output of the
     disteval.evaluation.feature_importance_mad(_majority). It plots
     a histogram for the feature importances with a rug plot.
@@ -49,8 +49,8 @@ def visualize_feature_importance_mad(return_list,
     fig: matplotlib.figure
         The created figure.
 
-    axes: list of matplotlib.axis (len=3)
-        The created axes.
+    ax: matplotlib.axis
+        The created axis.
     """
     fig, ax = plt.subplots(figsize=fig_size)
     kept = return_list[0]
@@ -74,7 +74,7 @@ def visualize_feature_importance_mad(return_list,
     else:
         if n_removed <= 10:
             do_text = True
-            ax.set_xlim(x_lims[0], x_lims[1] + (x_lims[1] - x_lims[0]) * 0.5)
+            ax.set_xlim(x_lims[0], x_lims[1] + (x_lims[1] - x_lims[0]) * 0.25)
         else:
             do_text = False
     removed_names = [name_i for name_i, kept_i in zip(X_names, kept)
@@ -103,4 +103,4 @@ def visualize_feature_importance_mad(return_list,
         plt.show()
     elif save_path is not None:
         fig.savefig(save_path)
-    return fig
+    return fig, ax
