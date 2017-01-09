@@ -3,7 +3,7 @@ from . import elements
 
 class ComparisonPlotter:
     def __init__(self):
-        raise NotImplementedError
+        pass
 
     def add_plot_element(self, element):
         """Function to add a plot element.
