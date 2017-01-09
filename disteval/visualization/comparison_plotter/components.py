@@ -21,10 +21,10 @@ CMAP_CYCLE = ['viridis_r',
 
 
 def get_cmap_name():
-    get_cmap.pointer += 1
-    if get_cmap.pointer >= len(CMAP_CYCLE):
-        get_cmap.pointer = 0
-    return CMAP_CYCLE[get_cmap.pointer]
+    get_cmap_name.pointer += 1
+    if get_cmap_name.pointer >= len(CMAP_CYCLE):
+        get_cmap_name.pointer = 0
+    return CMAP_CYCLE[get_cmap_name.pointer]
 
 get_cmap_name.pointer = -1
 
@@ -37,9 +37,11 @@ def get_color():
 get_color.pointer = -1
 
 class Component:
-    def __init__(self, label, c_type, X, weights=None, color=None, cmap=None):
+    def __init__(self, idx, label, c_type, X,
+                 weights=None, color=None, cmap=None):
         assert c_type in ['ref', 'ref_part', 'test', 'test_part'], \
             'Invalid c_type! Possible: [ref, ref_part, test, test_part]!'
+        self.idx = idx
         self.label = label
         self.c_type = c_type
         self.X = X

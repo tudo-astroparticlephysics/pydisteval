@@ -13,7 +13,7 @@ REGISTERED_ELEMENTS = {'aggarwalhisto': elements.AggarwalHisto,
                        'classicratio': elements.ClassicRatio}
 
 class ComparisonPlotter:
-    def __init__(self, title=None, x_label='Feature', n_bins=50):
+    def __init__(self, title=None, n_bins=50):
         self.title = title
         self.plot_parts = []
         self.calc_parts = []
@@ -24,13 +24,20 @@ class ComparisonPlotter:
             element = element(**kwargs)
         elif isinstance(element, str):
             element_class = REGISTERED_ELEMENTS[element.lower()]
-            element = element(**kwargs)
+            element = element_class(**kwargs)
         elif isinstance(element, elements.Element):
             pass
         else:
             raise TypeError('Invalid Type \'element\'!')
         element.register(self)
 
+    def register_calc_part(self, part):
+        if not part in self.calc_parts:
+            self.calc_parts.append(part)
+
+    def register_plot_part(self, part):
+        if not part in self.calc_parts:
+            self.plot_parts.append(part)
 
     def add_ref(self, label, X, weights=None, color=None, cmap=None):
         self.components.append(Component(idx=len(self.components),
@@ -42,28 +49,31 @@ class ComparisonPlotter:
                                          cmap=cmap))
 
     def add_ref_part(self, label, X, weights=None, color=None):
-        self.components.append(Component(label=label,
+        self.components.append(Component(idx=len(self.components),
+                                         label=label,
                                          c_type='ref_part',
                                          X=X,
                                          weights=weights,
                                          color=color))
 
     def add_test(self, label, X, weights=None, color=None):
-        self.components.append(Component(label=label,
+        self.components.append(Component(idx=len(self.components),
+                                         label=label,
                                          c_type='test_part',
                                          X=X,
                                          weights=weights,
                                          color=color))
 
     def add_test_part(self, label, X, weights=None, color=None):
-        self.components.append(Component(label=label,
+        self.components.append(Component(idx=len(self.components),
+                                         label=label,
                                          c_type='test_part',
                                          X=X,
                                          weights=weights,
                                          color=color))
 
-    def draw(fig=None, figsize=(10, 8)):
-        calc_container = self.calc():
+    def draw(self, x_label='Feature', fig=None, figsize=(10, 8)):
+        result_tray = self.calc()
         if not isinstance(fig, plt.Figure):
             self.last_fig = plt.figure(figsize=figsize)
         total_rows = sum([part_i.rows for part_i in self.plot_parts])
@@ -77,7 +87,6 @@ class ComparisonPlotter:
                 result_tray = part_i.execute(result_tray, comp_i)
         return fig
 
-
     def calc(self):
         result_tray = ResultTray()
         sorted(self.calc_parts)
@@ -88,4 +97,5 @@ class ComparisonPlotter:
             part_i.reset()
         return result_tray
 
-
+    def reset(self):
+        self.components = []
