@@ -2,13 +2,13 @@ class Part:
     name = 'BasePart'
     level = 1
     def __init__(self):
-        raise NotImplementedError
+        pass
 
-    def calc(self):
-        raise NotImplementedError
+    def execute(self, result_tray, component'):
+        return result_tray
 
-    def plot(self):
-        raise NotImplementedError
+    def reset(self):
+        pass
 
     def __lt__(self, other):
         return self.level < other.level
@@ -18,31 +18,40 @@ class Part:
 
 
 class CalcPart(Part):
-    def plot(self, *args, **kwargs):
-        raise RuntimeError('Trying to use a \'CalcPart\' for plotting')
+    pass
 
 
 class PlotPart(Part):
-    def calc(self, *args, **kwargs):
-        raise RuntimeError('Trying to use a \'CalcPart\' for calculation')
+    rows = 1
+    def init(self):
+        self.ax = None
 
+    def set_ax(self, fig, grid_spec_slice):
+        self.ax = fig.add_subplot(grid_spec_slice)
+        return self.ax
 
-from ..parts import CalcBinning
+    def get_rows(self):
+        assert self.rows > 0 and isinstance(self.rows, int), '\'rows\' ' \
+            'must be int and greater 0'
+        return self.rows
+
+    def reset(self):
+        self.ax = None
+
 
 
 class Element:
     name = 'DefaultElement'
-    n_bins = 50
     plot_components = []
-    calc_components = [CalcBinning(n_bins)]
+    calc_components = []
     def __init__(self):
         pass
 
     def register(self, comparator):
         for calc_comp_i in Element.calc_components:
-            comparator.register(calc_comp_i)
+            comparator.register_calc_part(calc_comp_i)
         for plot_comp_i in Element.plot_components:
-            comparator.register(plot_comp_i)
+            comparator.register_plot_part(plot_comp_i)
 
     def __eq__(self, other):
         return self.name == other.name
