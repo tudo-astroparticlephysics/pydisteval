@@ -4,7 +4,7 @@ class Part:
     def __init__(self):
         pass
 
-    def execute(self, result_tray, component'):
+    def execute(self, result_tray, component):
         return result_tray
 
     def reset(self):

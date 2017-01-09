@@ -1,3 +1,5 @@
+import numpy as np
+
 from .base_classes import CalcPart, PlotPart
 
 class CalcBinning(CalcPart):
@@ -14,11 +16,11 @@ class CalcBinning(CalcPart):
             max_x = np.max(component.X)
             binning = np.linspace(min_x, max_x, self.n_bins + 1)
             result_tray.add(binning, 'binning')
-        elif check_all:
+        elif self.check_all:
             current_min_x = result_tray.binning[0]
             current_max_x = result_tray.binning[-1]
             min_x = min(current_min_x, np.min(component.X))
-            min_x = max(current_max_x, np.max(component.X))
+            max_x = max(current_max_x, np.max(component.X))
             binning = np.linspace(min_x, max_x, self.n_bins + 1)
             result_tray.add(binning, 'binning')
         self.n_components += 1
@@ -37,10 +39,10 @@ class CalcHistogram(CalcPart):
             n_components = result_tray.n_components
             histo = np.zeros((len(binning) - 1, n_components))
         else:
-            histo = result_tray.binning
+            histo = result_tray.histo
         histo[:, component.idx] = np.histogram(component.X,
                                                weights=component.weights,
-                                               bins=binning)
+                                               bins=binning)[0]
         result_tray.add(histo, 'histo')
         return result_tray
 
