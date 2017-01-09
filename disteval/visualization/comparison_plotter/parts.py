@@ -1,26 +1,9 @@
-class Part:
-    def __init__(self):
-        raise NotImplementedError
-
-    def calc(self):
-        raise NotImplementedError
-
-    def plot(self):
-        raise NotImplementedError
-
-
-class CalcPart(Part):
-    def plot(self, *args, **kwargs):
-        raise RuntimeError('Trying to use a \'CalcPart\' for plotting')
-
-
-class PlotPart(Part):
-    def calc(self, *args, **kwargs):
-        raise RuntimeError('Trying to use a \'CalcPart\' for calculation')
-
+from .base_classes import CalcPart, PlotPart
 
 class CalcBinning(CalcPart):
-    def __init__(self):
+    name = 'CalcBinning'
+    level = 0
+    def __init__(self, n_bins):
         pass
 
     def calc(self, df):
@@ -28,6 +11,7 @@ class CalcBinning(CalcPart):
 
 
 class CalcHistAggerwal(CalcPart):
+    name = 'CalcHistAggerwal'
     def __init__(self):
         pass
 
@@ -35,6 +19,7 @@ class CalcHistAggerwal(CalcPart):
         raise NotImplementedError
 
 class CalcHistClassic(CalcPart):
+    name = 'CalcHistClassic'
     def __init__(self):
         pass
 
@@ -42,6 +27,7 @@ class CalcHistClassic(CalcPart):
         raise NotImplementedError
 
 class CalcRatioAggerwal(CalcPart):
+    name = 'CalcRatioAggerwal'
     def __init__(self):
         pass
 
@@ -49,6 +35,7 @@ class CalcRatioAggerwal(CalcPart):
         raise NotImplementedError
 
 class CalcRatioClassic(CalcPart):
+    name = 'CalcRatioClassic'
     def __init__(self):
         pass
 
@@ -56,6 +43,7 @@ class CalcRatioClassic(CalcPart):
         raise NotImplementedError
 
 class PlotHistAggerwal(PlotPart):
+    name = 'PlotHistAggerwal'
     def __init__(self):
         pass
 
@@ -64,6 +52,7 @@ class PlotHistAggerwal(PlotPart):
 
 
 class PlotHistClassic(PlotPart):
+    name = 'PlotHistClassic'
     def __init__(self):
         pass
 
@@ -73,6 +62,7 @@ class PlotHistClassic(PlotPart):
 
 
 class PlotRatioAggerwal(PlotPart):
+    name = 'PlotRatioAggerwal'
     def __init__(self):
         pass
 
@@ -80,8 +70,8 @@ class PlotRatioAggerwal(PlotPart):
         raise NotImplementedError
 
 
-
 class PlotRatioClassic(PlotPart):
+    name = 'PlotRatioClassic'
     def __init__(self):
         pass
 

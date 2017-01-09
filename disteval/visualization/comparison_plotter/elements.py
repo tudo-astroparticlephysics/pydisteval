@@ -1,26 +1,19 @@
-class Element:
-    def __init__(self):
-        raise NotImplementedError
-
-    def register(self, comparator):
-        raise NotImplementedError
-
-    def run(self):
-        raise NotImplementedError
-
+from .base_classes import Element
 
 class AggarwalRatio(Element):
-    def __init__(self):
+    name = 'AggarwalRatio'
+    def __init__(self,):
         pass
-
     def register(self, comparator):
-        raise NotImplementedError
+        super(AggarwalRatio, self).__init__(comparator)
+
 
     def run(self):
         raise NotImplementedError
 
 
 class AggarwalHisto(Element):
+    name = 'AggarwalHisto'
     def __init__(self):
         pass
 
@@ -32,6 +25,7 @@ class AggarwalHisto(Element):
 
 
 class ClassicHisto(Element):
+    name = 'ClassicHisto'
     def __init__(self):
         pass
 
@@ -43,6 +37,7 @@ class ClassicHisto(Element):
 
 
 class ClassicRatio(Element):
+    name = 'ClassicRatio'
     def __init__(self):
         pass
 
