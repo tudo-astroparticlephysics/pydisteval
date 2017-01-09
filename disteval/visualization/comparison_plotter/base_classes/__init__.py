@@ -9,11 +9,11 @@ class Part:
         pass
 
     def execute(self, result_tray, component):
-        self.logger.info('Executing {} for {}!'.format(self.name,
+        self.logger.info('\tExecuting {} for {}!'.format(self.name,
                                                        component.idx))
 
     def reset(self):
-        self.logger.info('Resetting {}!'.format(self.name))
+        self.logger.info('\tResetting {}!'.format(self.name))
 
     def __lt__(self, other):
         return self.level < other.level
@@ -32,6 +32,7 @@ class PlotPart(Part):
         self.ax = None
 
     def set_ax(self, fig, grid_spec_slice):
+        self.logger.info('Setting up Axes!')
         self.ax = fig.add_subplot(grid_spec_slice)
         return self.ax
 
@@ -39,11 +40,6 @@ class PlotPart(Part):
         assert self.rows > 0 and isinstance(self.rows, int), '\'rows\' ' \
             'must be int and greater 0'
         return self.rows
-
-    def reset(self):
-        super(Part, self).reset()
-        self.ax = None
-
 
 
 class Element:
