@@ -1,5 +1,13 @@
+import logging
+
 import numpy as np
+
 from disteval.visualization.comparison_plotter import ComparisonPlotter
+
+logging.captureWarnings(True)
+logging.basicConfig(
+        format='%(processName)-10s %(name)s %(levelname)-8s %(message)s',
+        level=logging.INFO)
 
 plotter = ComparisonPlotter()
 plotter.add_plot_element('ClassicHisto')

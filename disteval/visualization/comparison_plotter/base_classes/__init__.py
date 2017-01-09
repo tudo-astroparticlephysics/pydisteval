@@ -1,14 +1,19 @@
+import logging
+
+
 class Part:
     name = 'BasePart'
     level = 1
+    logger = logging.getLogger("Part")
     def __init__(self):
         pass
 
     def execute(self, result_tray, component):
-        return result_tray
+        self.logger.info('Executing {} for {}!'.format(self.name,
+                                                       component.idx))
 
     def reset(self):
-        pass
+        self.logger.info('Resetting {}!'.format(self.name))
 
     def __lt__(self, other):
         return self.level < other.level
@@ -36,6 +41,7 @@ class PlotPart(Part):
         return self.rows
 
     def reset(self):
+        super(Part, self).reset()
         self.ax = None
 
 
@@ -44,6 +50,7 @@ class Element:
     name = 'DefaultElement'
     plot_components = []
     calc_components = []
+    logger = logging.getLogger("Part")
     def __init__(self):
         pass
 
