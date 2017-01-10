@@ -74,7 +74,7 @@ setup(
             'numpy',            # in anaconda
             'matplotlib>=1.4',  # in anaconda
 #            'sklearn-pandas',
-            'sklearn',           # in anaconda
+            'scikit-learn>=0.18.1',           # in anaconda
             'tables',
             'tqdm',
         ],
