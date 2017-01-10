@@ -1,3 +1,29 @@
+import numpy as np
+from matplotlib.ticker import MaxNLocator
+from matplotlib import pyplot as plt
+from matplotlib.gridspec import GridSpec
+import matplotlib.patches as mpatches
+from matplotlib.colors import ColorConverter
+from colorsys import rgb_to_hls, hls_to_rgb
+
+from . import legend_entries as le
+
+MAIN_ZORDER = 10
+
+def modify_color(color,
+                 d_saturation=0.,
+                 d_lightness=0.):
+    conv = ColorConverter()
+    if not isinstance(color, tuple):
+        rgb_color = conv.to_rgb(color)
+    else:
+        rgb_color = color
+    hls_color = rgb_to_hls(*rgb_color)
+    new_l = max(0, min(0.9, hls_color[1] + d_lightness))
+    new_s = max(0, min(1, hls_color[2] + d_saturation))
+    return hls_to_rgb(hls_color[0], new_l, new_s)
+
+
 def plot_inf_marker(fig, ax, binning, zero_mask, markeredgecolor='k',
                     markerfacecolor='none', bot=True, alpha=1.):
     patches = []
@@ -28,3 +54,83 @@ def plot_inf_marker(fig, ax, binning, zero_mask, markeredgecolor='k',
                                                    zorder=ZORDER+1,
                                                    alpha=alpha))
     fig.patches.extend(patches)
+
+def plot_band(ax,
+              bin_edges,
+              y_err_low,
+              y_err_high,
+              color,
+              alpha=0.5,
+              borders=1.,
+              brighten=True,
+              zorder=None):
+    if isinstance(borders, bool):
+        if borders:
+            border_lw = 0.3
+            plot_borders = True
+        else:
+            plot_borders = False
+    elif isinstance(borders, float):
+        border_lw = borders
+        plot_borders = True
+    else:
+        plot_borders = False
+
+    if zorder is None:
+        zorder = MAIN_ZORDER - 1
+    if brighten:
+        band_color = modify_color(color, 0, 0.4)
+    else:
+        band_color = color
+    alpha = min(1., max(0., alpha))
+    ax.fill_between(bin_edges,
+                    np.append(y_err_low[0], y_err_low),
+                    np.append(y_err_high[0], y_err_high),
+                    step='pre',
+                    color=band_color,
+                    edgecolor=band_color,
+                    linewidth=0.0,
+                    alpha=alpha,
+                    zorder=zorder-1)
+    if plot_borders:
+        if brighten:
+            band_color = modify_color(color, 0, 0.2)
+        else:
+            band_color = color
+        plot_hist(ax,
+                  bin_edges,
+                  y_err_low,
+                  border_color,
+                  lw=border_lw,
+                  alpha=1.0,
+                  zorder=zorder)
+        plot_hist(ax,
+                  bin_edges,
+                  y_err_high,
+                  border_color,
+                  lw=border_lw,
+                  alpha=1.0,
+                  zorder=zorder)
+
+def plot_hist(ax,
+              bin_edges,
+              y,
+              color,
+              yerr=None,
+              lw=1.6,
+              alpha=1.0,
+              zorder=None):
+        if zorder is None:
+            zorder = MAIN_ZORDER
+        alpha = min(1., max(0., alpha))
+        bin_mids = (bin_edges[1:] + bin_edges[:-1]) / 2.
+        ax.errorbar(x=bin_mids,
+                    y=y,
+                    ls='',
+                    xerr=np.diff(bin_edges) / 2.,
+                    yerr=yerr,
+                    color=color,
+                    markersize=0,
+                    capsize=0,
+                    lw=lw,
+                    zorder=zorder)
