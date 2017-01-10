@@ -8,10 +8,9 @@ from .base_classes import CalcPart, PlotPart
 class CalcBinning(CalcPart):
     name = 'CalcBinning'
     level = 0
-    def __init__(self, n_bins, check_all=True):
+    def __init__(self, n_bins=50, check_all=True):
         self.n_bins = n_bins
         self.check_all = check_all
-        self.n_components = 0
 
     def execute(self, result_tray, component):
         super(CalcPart, self).execute(result_tray, component)
@@ -27,13 +26,7 @@ class CalcBinning(CalcPart):
             max_x = max(current_max_x, np.max(component.X))
             binning = np.linspace(min_x, max_x, self.n_bins + 1)
             result_tray.add(binning, 'binning')
-        self.n_components += 1
-        result_tray.add(self.n_components, 'n_components')
         return result_tray
-
-    def reset(self):
-        super(CalcPart, self).reset()
-        self.n_components = 0
 
 
 class CalcHistogram(CalcPart):
@@ -42,13 +35,19 @@ class CalcHistogram(CalcPart):
 
     def execute(self, result_tray, component):
         super(CalcPart, self).execute(result_tray, component)
-        binning = result_tray.binning
+        if not hasattr(result_tray, 'binning'):
+            raise RuntimeError('No \'binning\' in the result tray.'
+                               ' run \'CalcBinning\' first!')
+        else:
+            binning = result_tray.binning
 
         weights = component.weights
         X = component.X
         idx = component.idx
 
         n_bins = len(binning) + 1
+        if component.c_type == 'ref':
+            result_tray.add(component.livetime, 'ref_livetime')
         if not hasattr(result_tray, 'sum_w'):
             sum_w = np.zeros((n_bins, result_tray.n_components))
             sum_w_squared = np.zeros_like(sum_w)
@@ -88,16 +87,27 @@ class CalcAggarwalHistoErrors(CalcPart):
 
 class CalcClassicHistoErrors(CalcPart):
     name = 'CalcClassicHistoErrors'
-    def __init__(self):
-        self.ref_idx = None
 
     def execute(self, result_tray, component):
         super(CalcPart, self).execute(result_tray, component)
-        raise NotImplementedError
 
-    def reset(self):
-        super(CalcPart, self).reset()
-        self.ref_idx = None
+        if not hasattr(result_tray, 'sum_w'):
+            raise RuntimeError('No \'sum_w\' in the result tray.'
+                               ' run \'CalcHistogram\' first!')
+        else:
+            sum_w = result_tray.sum_w
+            sum_w_squared = result_tray.sum_w_squared
+
+        if not hasattr(result_tray, 'rel_err'):
+            rel_err = np.zeros_like(sum_w)
+        else:
+            rel_err = result_tray.rel_err
+        idx = component.idx
+        abs_err = np.sqrt(sum_w_squared[:, idx])
+        mask = abs_err > 0
+        rel_err[mask, component.idx] = abs_err[mask] / sum_w[mask, idx]
+        result_tray.add(rel_err, 'rel_err')
+        return result_tray
 
 
 class PlotHistAggerwal(PlotPart):
@@ -108,7 +118,7 @@ class PlotHistAggerwal(PlotPart):
 
     def execute(self, result_tray, component):
         super(PlotPart, self).execute(result_tray, component)
-        raise NotImplementedError
+        self.ax
 
 
 class PlotHistClassic(PlotPart):

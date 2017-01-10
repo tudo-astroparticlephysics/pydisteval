@@ -9,17 +9,20 @@ class Part:
         pass
 
     def execute(self, result_tray, component):
-        self.logger.info('\tExecuting {} for {}!'.format(self.name,
+        self.logger.debug('\tExecuting {} for {}!'.format(self.name,
                                                        component.idx))
 
     def reset(self):
-        self.logger.info('\tResetting {}!'.format(self.name))
+        self.logger.debug('\tResetting {}!'.format(self.name))
 
     def __lt__(self, other):
         return self.level < other.level
 
     def __eq__(self, other):
-        return self.name == other.name
+        if isinstance(other, Part):
+            return self.name == other.name
+        elif isinstance(other, str):
+            return self.name == other
 
 
 class CalcPart(Part):
@@ -32,7 +35,7 @@ class PlotPart(Part):
         self.ax = None
 
     def set_ax(self, fig, grid_spec_slice):
-        self.logger.info('Setting up Axes!')
+        self.logger.debug('Setting up Axes!')
         self.ax = fig.add_subplot(grid_spec_slice)
         return self.ax
 
@@ -46,7 +49,7 @@ class Element:
     name = 'DefaultElement'
     plot_components = []
     calc_components = []
-    logger = logging.getLogger("Part")
+    logger = logging.getLogger("Element")
     def __init__(self):
         pass
 
@@ -57,6 +60,10 @@ class Element:
             comparator.register_plot_part(plot_comp_i)
 
     def __eq__(self, other):
-        return self.name == other.name
+        if isinstance(other, Part):
+            return self.name == other.name
+        elif isinstance(other, str):
+            return self.name == other
+
 
 

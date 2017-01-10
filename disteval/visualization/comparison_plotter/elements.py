@@ -9,7 +9,7 @@ class AggarwalHisto(Element):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcAggarwalHistoErrors(alphas))
-        self.calc_components.append(parts.PlotHistAggerwal())
+        self.plot_components.append(parts.PlotHistAggerwal())
 
 
 class ClassicHisto(Element):
@@ -19,7 +19,7 @@ class ClassicHisto(Element):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcClassicHistoErrors())
-        self.calc_components.append(parts.PlotHistClassic())
+        self.plot_components.append(parts.PlotHistClassic())
 
 
 class AggarwalRatio(Element):
@@ -28,7 +28,7 @@ class AggarwalRatio(Element):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcAggarwalHistoErrors(alphas))
-        self.calc_components.append(parts.PlotRatioAggerwal())
+        self.plot_components.append(parts.PlotRatioAggerwal())
 
 
 class ClassicRatio(Element):
@@ -38,4 +38,4 @@ class ClassicRatio(Element):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcClassicHistoErrors())
-        self.calc_components.append(parts.PlotRatioClassic())
+        self.plot_components.append(parts.PlotRatioClassic())
