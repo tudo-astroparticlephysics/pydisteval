@@ -8,7 +8,7 @@ from colorsys import rgb_to_hls, hls_to_rgb
 
 from . import legend_entries as le
 
-MAIN_ZORDER = 10
+MAIN_ZORDER = 4
 
 def modify_color(color,
                  d_saturation=0.,
@@ -43,16 +43,18 @@ def plot_inf_marker(fig, ax, binning, zero_mask, markeredgecolor='k',
     for bin_i, mask_i in zip(bin_center, zero_mask):
         if not mask_i:
             x_i = ((bin_i - bin_0) / binning_width * width) + x_0
-            patches.append(mpatches.RegularPolygon([x_i, y0], 3,
-                                                   radius=radius,
-                                                   orientation=orientation,
-                                                   facecolor=markerfacecolor,
-                                                   edgecolor=markeredgecolor,
-                                                   transform=fig.transFigure,
-                                                   figure=fig,
-                                                   linewidth=1.,
-                                                   zorder=ZORDER+1,
-                                                   alpha=alpha))
+            patches.append(mpatches.RegularPolygon(
+                [x_i, y0],
+                3,
+                radius=radius,
+                orientation=orientation,
+                facecolor=markerfacecolor,
+                edgecolor=markeredgecolor,
+                transform=fig.transFigure,
+                figure=fig,
+                linewidth=1.,
+                zorder=ZORDER+1,
+                alpha=alpha))
     fig.patches.extend(patches)
 
 def plot_band(ax,
@@ -120,17 +122,25 @@ def plot_hist(ax,
               lw=1.6,
               alpha=1.0,
               zorder=None):
-        if zorder is None:
-            zorder = MAIN_ZORDER
-        alpha = min(1., max(0., alpha))
-        bin_mids = (bin_edges[1:] + bin_edges[:-1]) / 2.
-        ax.errorbar(x=bin_mids,
-                    y=y,
-                    ls='',
-                    xerr=np.diff(bin_edges) / 2.,
-                    yerr=yerr,
-                    color=color,
-                    markersize=0,
-                    capsize=0,
-                    lw=lw,
-                    zorder=zorder)
+    if zorder is None:
+        zorder = MAIN_ZORDER
+    alpha = min(1., max(0., alpha))
+    bin_mids = (bin_edges[1:] + bin_edges[:-1]) / 2.
+    nan_mask = np.isfinite(y)
+    bin_mids_masked = bin_mids[nan_mask]
+    y_masked = y[nan_mask]
+    xerr_masked = (np.diff(bin_edges) / 2)[nan_mask]
+    if yerr is not None:
+        yerr_masked = yerr[nan_mask]
+    else:
+        yerr_masked = None
+    ax.errorbar(x=bin_mids_masked,
+                y=y_masked,
+                ls='',
+                xerr=xerr_masked,
+                yerr=yerr_masked,
+                color=color,
+                markersize=0,
+                capsize=0,
+                lw=lw,
+                zorder=zorder)
