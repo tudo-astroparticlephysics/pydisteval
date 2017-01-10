@@ -21,6 +21,7 @@ class ComparisonPlotter:
         self.plot_parts = []
         self.calc_parts = []
         self.components = []
+        self.ref_idx = 0
 
     def add_plot_element(self, element, **kwargs):
         if isclass(element):
@@ -32,17 +33,17 @@ class ComparisonPlotter:
             pass
         else:
             raise TypeError('Invalid Type \'element\'!')
-        logger.info('Adding {}! (Element)'.format(element.name))
+        logger.debug('Adding {}! (Element)'.format(element.name))
         element.register(self)
 
     def register_calc_part(self, part):
         if not part in self.calc_parts:
-            logger.info('\tRegistered {} (CalcPart)!'.format(part.name))
+            logger.debug('\tRegistered {} (CalcPart)!'.format(part.name))
             self.calc_parts.append(part)
 
     def register_plot_part(self, part):
         if not part in self.calc_parts:
-            logger.info('\tRegistered {} (PlotPart)!'.format(part.name))
+            logger.debug('\tRegistered {} (PlotPart)!'.format(part.name))
             self.plot_parts.append(part)
 
     def add_ref(self,
@@ -52,11 +53,14 @@ class ComparisonPlotter:
                 weights=None,
                 color=None,
                 cmap=None):
-        logger.info('Added \'{}\' (Ref-Component)!'.format(label))
-        self.components.append(Component(idx=len(self.components),
+        idx = len(self.components)
+        self.ref_idx = idx
+        logger.debug('Added \'{}\' (Ref-Component)!'.format(label))
+        self.components.append(Component(idx=idx,
                                          label=label,
                                          c_type='ref',
                                          X=X,
+                                         livetime=livetime,
                                          weights=weights,
                                          color=color,
                                          cmap=cmap))
@@ -67,11 +71,12 @@ class ComparisonPlotter:
                      livetime=1,
                      weights=None,
                      color=None):
-        logger.info('Added \'{}\' (RefPart-Component)!'.format(label))
+        logger.debug('Added \'{}\' (RefPart-Component)!'.format(label))
         self.components.append(Component(idx=len(self.components),
                                          label=label,
                                          c_type='ref_part',
                                          X=X,
+                                         livetime=livetime,
                                          weights=weights,
                                          color=color))
 
@@ -81,11 +86,12 @@ class ComparisonPlotter:
                  livetime=1,
                  weights=None,
                  color=None):
-        logger.info('Added \'{}\' (Test-Component)!'.format(label))
+        logger.debug('Added \'{}\' (Test-Component)!'.format(label))
         self.components.append(Component(idx=len(self.components),
                                          label=label,
-                                         c_type='test_part',
+                                         c_type='test',
                                          X=X,
+                                         livetime=livetime,
                                          weights=weights,
                                          color=color))
 
@@ -95,43 +101,56 @@ class ComparisonPlotter:
                       livetime=1,
                       weights=None,
                       color=None):
-        logger.info('Added \'{}\' (TestPart-Component)!'.format(label))
+        logger.debug('Added \'{}\' (TestPart-Component)!'.format(label))
         self.components.append(Component(idx=len(self.components),
                                          label=label,
                                          c_type='test_part',
                                          X=X,
+                                         livetime=livetime,
                                          weights=weights,
                                          color=color))
 
     def draw(self, x_label='Feature', fig=None, figsize=(10, 8)):
-        logger.info('Start Draw Process!')
-        logger.info('===================')
+        logger.debug('Start Draw Process!')
+        logger.debug('===================')
         result_tray = self.calc()
         if not isinstance(fig, plt.Figure):
             self.last_fig = plt.figure(figsize=figsize)
         total_rows = sum([part_i.rows for part_i in self.plot_parts])
         gs = GridSpec(nrows=total_rows, ncols=1)
-        row_point = 0
-        logger.info('Starting Plotting...')
+        row_pointer = 0
+        logger.debug('Starting Plotting...')
         for part_i in self.plot_parts:
-            row_slice = slice(row_point, row_pointer + part_i.get_height())
+            row_slice = slice(row_pointer, row_pointer + part_i.get_height())
             col_slice = slice(None)
             part_i.set_ax(fig, gs[row_slice, col_slice])
             for comp_i in self.components:
                 result_tray = part_i.execute(result_tray, comp_i)
-        logger.info('Finished!')
+        logger.debug('Finished!')
         return fig
 
     def calc(self):
-        logger.info('Starting Calculating...')
+        logger.debug('Starting Calculating...')
         result_tray = ResultTray()
+        n_components = len(self.components)
         sorted(self.calc_parts)
         sorted(self.components)
+        ref_idx = None
+        for i, comp in enumerate(self.components):
+            comp.idx = i
+            if comp.c_type == 'ref':
+                if ref_idx is None:
+                    ref_idx = i
+                else:
+                    raise RuntimeError('More than one ref component added!')
+        result_tray.add(n_components, 'n_components')
+        result_tray.add(ref_idx, 'ref_idx')
+        result_tray.add(self.components[ref_idx].livetime, 'ref_livetime')
         for part_i in self.calc_parts:
             for comp_i in self.components:
                 result_tray = part_i.execute(result_tray, comp_i)
             part_i.reset()
-        logger.info('Finished!')
+        logger.debug('Finished!')
         return result_tray
 
     def reset(self):

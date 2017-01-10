@@ -37,7 +37,7 @@ def get_color():
 get_color.pointer = -1
 
 class Component:
-    def __init__(self, idx, label, c_type, X,
+    def __init__(self, idx, label, c_type, X, livetime=1,
                  weights=None, color=None, cmap=None):
         assert c_type in ['ref', 'ref_part', 'test', 'test_part'], \
             'Invalid c_type! Possible: [ref, ref_part, test, test_part]!'
@@ -45,6 +45,7 @@ class Component:
         self.label = label
         self.c_type = c_type
         self.X = X
+        self.livetime = 1
         self.weights = weights
         if color is None:
             self.color = get_color()
