@@ -9,6 +9,7 @@ class CalcBinning(CalcPart):
     name = 'CalcBinning'
     level = 0
     def __init__(self, n_bins=50, check_all=True):
+        super(CalcPart, self).__init__()
         self.n_bins = n_bins
         self.check_all = check_all
 
@@ -73,6 +74,7 @@ class CalcHistogram(CalcPart):
 class CalcAggarwalHistoErrors(CalcPart):
     name = 'CalcAggarwalHistoErrors'
     def __init__(self, alphas):
+        super(CalcPart, self).__init__()
         self.alphas = alphas
         self.ref_idx = None
 
@@ -114,7 +116,7 @@ class PlotHistAggerwal(PlotPart):
     name = 'PlotHistAggerwal'
     rows = 5
     def __init__(self):
-        pass
+        super(PlotPart, self).__init__()
 
     def execute(self, result_tray, component):
         super(PlotPart, self).execute(result_tray, component)
@@ -125,10 +127,30 @@ class PlotHistClassic(PlotPart):
     name = 'PlotHistClassic'
     rows = 5
     def __init__(self,
-                 log_y=True,
-                 bands=False):
+                 log_y,
+                 normalize,
+                 bands,
+                 band_borders,
+                 band_brighten,
+                 band_alpha):
+        super(PlotPart, self).__init__()
         self.log_y = log_y
         self.bands = bands
+        self.normalize = normalize
+        self.band_borders = band_borders
+        self.band_brighten = band_brighten
+        self.band_alpha = band_alpha
+        self.y_lower = 10
+
+    def first_execute(self, result_tray, component):
+        super(PlotPart, self).first_execute(result_tray, component)
+        if self.log_y:
+            self.ax.set_yscale('log', clip=True)
+        self.ax.set_xlabel(result_tray.x_label)
+        self.ax.set_ylabel('Frequence')
+        self.ax.set_xlim([result_tray.binning[0],
+                           result_tray.binning[-1]])
+        return result_tray
 
     def execute(self, result_tray, component):
         super(PlotPart, self).execute(result_tray, component)
@@ -144,35 +166,39 @@ class PlotHistClassic(PlotPart):
         y_high = y_vals + y_err
 
         if self.bands:
-            plot_funcs.plot_hist(self.ax,
-                                 binning,
-                                 y_vals,
-                                 color)
-            plot_funcs.plot_band(self.ax,
-                                 binning,
-                                 y_low,
-                                 y_high,
-                                 color,
-                                 borders=False,
-                                 brighten=False,
-                                 alpha=1.0)
+            plot_funcs.plot_hist(ax=self.ax,
+                                 bin_edges=binning,
+                                 y=y_vals,
+                                 color=color)
+            plot_funcs.plot_band(ax=self.ax,
+                                 bin_edges=binning,
+                                 y_err_low=y_low,
+                                 y_err_high=y_high,
+                                 color=color,
+                                 alpha=self.band_alpha,
+                                 borders=self.band_borders,
+                                 brighten=self.band_brighten)
         else:
-            plot_funcs.plot_hist(self.ax,
-                                 binning,
-                                 y_vals,
-                                 color,
+            plot_funcs.plot_hist(ax=self.ax,
+                                 bin_edges=binning,
+                                 y=y_vals,
+                                 color=color,
                                  yerr=y_err)
         if self.log_y:
-            self.ax.set_yscale('log', clip=True)
-        self.ax.set_xlabel(result_tray.x_label)
-        self.ax.set_ylabel('Frequence')
+            y_min = np.min(y_vals[y_vals > 0])
+            self.y_lower = min(self.y_lower, y_min)
         return result_tray
+
+    def reset(self):
+        super(PlotPart, self).reset()
+        current_y_lims = self.ax.get_ylim()
+        self.ax.set_ylim([self.y_lower * 0.5, current_y_lims[1]])
 
 class PlotRatioAggerwal(PlotPart):
     name = 'PlotRatioAggerwal'
     rows = 1
     def __init__(self):
-        pass
+        super(PlotPart, self).__init__()
 
     def execute(self, result_tray, component):
         super(PlotPart, self).execute(result_tray, component)
@@ -182,10 +208,78 @@ class PlotRatioAggerwal(PlotPart):
 class PlotRatioClassic(PlotPart):
     name = 'PlotRatioClassic'
     rows = 1
-    def __init__(self):
-        pass
+    def __init__(self,
+                 bands,
+                 band_borders,
+                 band_brighten,
+                 band_alpha):
+        super(PlotPart, self).__init__()
+        self.bands = bands
+        self.band_borders = band_borders
+        self.band_brighten = band_brighten
+        self.band_alpha = band_alpha
+
+    def first_execute(self, result_tray, component):
+        super(PlotPart, self).first_execute(result_tray, component)
+        self.ax.set_xlabel(result_tray.x_label)
+        self.ax.set_ylabel(r'$\frac{Test - Ref}{sigma}$')
+        self.ax.set_xlim([result_tray.binning[0],
+                           result_tray.binning[-1]])
+        return result_tray
 
     def execute(self, result_tray, component):
         super(PlotPart, self).execute(result_tray, component)
-        raise NotImplementedError
+        if component.c_type == 'ref':
+            self.execute_ref(result_tray, component)
+        else:
+            self.execute_others(result_tray, component)
+        return result_tray
 
+    def execute_ref(self, result_tray, component):
+        binning = result_tray.binning
+        color = component.color
+
+        plot_funcs.plot_hist(ax=self.ax,
+                             bin_edges=binning,
+                             y=np.zeros(len(binning) - 1),
+                             color=color,
+                             yerr=None)
+        return result_tray
+
+    def execute_others(self, result_tray, component):
+        ref_idx = result_tray.ref_idx
+        idx = component.idx
+        label = component.label
+        color = component.color
+        binning = result_tray.binning
+        bin_mids = (binning[1:] + binning[:-1]) / 2.
+
+        y_vals = result_tray.sum_w[1:-1, idx]
+        y_err = result_tray.rel_err[:, idx][1:-1] * y_vals
+        ref_vals = result_tray.sum_w[1:-1, ref_idx]
+
+        ratio = np.empty_like(y_vals)
+        ratio[:] = np.nan
+        mask = y_err > 0
+        ratio[mask] = (ref_vals[mask] - y_vals[mask]) / y_err[mask]
+
+        if self.bands:
+            plot_funcs.plot_hist(ax=self.ax,
+                                 bin_edges=binning,
+                                 y=y_vals,
+                                 color=color)
+            plot_funcs.plot_band(ax=self.ax,
+                                 bin_edges=binning,
+                                 y_err_low=y_low,
+                                 y_err_high=y_high,
+                                 color=color,
+                                 alpha=self.band_alpha,
+                                 borders=self.band_borders,
+                                 brighten=self.band_brighten)
+        else:
+            plot_funcs.plot_hist(ax=self.ax,
+                                 bin_edges=binning,
+                                 y=ratio,
+                                 color=color,
+                                 yerr=None)
+        return result_tray

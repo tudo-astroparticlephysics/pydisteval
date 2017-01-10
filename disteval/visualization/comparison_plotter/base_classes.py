@@ -4,16 +4,25 @@ import logging
 class Part:
     name = 'BasePart'
     level = 1
-    logger = logging.getLogger("Part")
+    logger = logging.getLogger("Part    ")
     def __init__(self):
-        pass
+        self.n_executions = 0
 
     def execute(self, result_tray, component):
-        self.logger.debug('\tExecuting {} for {}!'.format(self.name,
+        self.logger.debug('\t{}: Executing {}!'.format(self.name,
                                                        component.idx))
+        if self.n_executions == 0:
+            result_tray = self.first_execute(result_tray, component)
+        self.n_executions += 1
+        return result_tray
+
+    def first_execute(self, result_tray, component):
+        return result_tray
 
     def reset(self):
-        self.logger.debug('\tResetting {}!'.format(self.name))
+        self.logger.debug('\t{}: Resetting!'.format(self.name))
+
+
 
     def __lt__(self, other):
         return self.level < other.level
@@ -34,8 +43,12 @@ class PlotPart(Part):
     def init(self):
         self.ax = None
 
+    def execute(self, result_tray, component):
+        super(Part, self).execute(result_tray, component)
+        self.first_execute(self, result_tray, component)
+
     def set_ax(self, fig, grid_spec_slice):
-        self.logger.debug('Setting up Axes!')
+        self.logger.debug('\t{}: Setting up Axes!'.format(self.name))
         self.ax = fig.add_subplot(grid_spec_slice)
         return self.ax
 
@@ -49,7 +62,7 @@ class Element:
     name = 'DefaultElement'
     plot_components = []
     calc_components = []
-    logger = logging.getLogger("Element")
+    logger = logging.getLogger("Element ")
     def __init__(self):
         pass
 

@@ -13,7 +13,7 @@ REGISTERED_ELEMENTS = {'aggarwalhisto': elements.AggarwalHisto,
                        'classichisto': elements.ClassicHisto,
                        'classicratio': elements.ClassicRatio}
 
-logger = logging.getLogger("Plotter")
+logger = logging.getLogger("Plotter ")
 
 class ComparisonPlotter:
     def __init__(self, title=None, n_bins=50):
@@ -42,7 +42,7 @@ class ComparisonPlotter:
             self.calc_parts.append(part)
 
     def register_plot_part(self, part):
-        if not part in self.calc_parts:
+        if not part in self.plot_parts:
             logger.debug('\tRegistered {} (PlotPart)!'.format(part.name))
             self.plot_parts.append(part)
 
@@ -122,12 +122,14 @@ class ComparisonPlotter:
         row_pointer = 0
         logger.debug('Starting Plotting...')
         for part_i in self.plot_parts:
-            row_slice = slice(row_pointer, row_pointer + part_i.get_rows())
+            part_rows = part_i.get_rows()
+            row_slice = slice(row_pointer, row_pointer + part_rows)
             col_slice = slice(None)
             part_i.set_ax(fig, gs[row_slice, col_slice])
-
+            row_pointer += part_rows
             for comp_i in self.components:
                 result_tray = part_i.execute(result_tray, comp_i)
+            part_i.reset()
         logger.debug('Finished!')
         fig.savefig('test.png')
         return fig
