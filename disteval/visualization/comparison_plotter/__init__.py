@@ -114,19 +114,22 @@ class ComparisonPlotter:
         logger.debug('Start Draw Process!')
         logger.debug('===================')
         result_tray = self.calc()
+        result_tray.add(x_label, 'x_label')
         if not isinstance(fig, plt.Figure):
-            self.last_fig = plt.figure(figsize=figsize)
-        total_rows = sum([part_i.rows for part_i in self.plot_parts])
+            fig = plt.figure(figsize=figsize)
+        total_rows = sum([part_i.get_rows() for part_i in self.plot_parts])
         gs = GridSpec(nrows=total_rows, ncols=1)
         row_pointer = 0
         logger.debug('Starting Plotting...')
         for part_i in self.plot_parts:
-            row_slice = slice(row_pointer, row_pointer + part_i.get_height())
+            row_slice = slice(row_pointer, row_pointer + part_i.get_rows())
             col_slice = slice(None)
             part_i.set_ax(fig, gs[row_slice, col_slice])
+
             for comp_i in self.components:
                 result_tray = part_i.execute(result_tray, comp_i)
         logger.debug('Finished!')
+        fig.savefig('test.png')
         return fig
 
     def calc(self):

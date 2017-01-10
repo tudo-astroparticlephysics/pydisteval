@@ -3,7 +3,7 @@ import logging
 import numpy as np
 
 from .base_classes import CalcPart, PlotPart
-
+from .functions import plot_funcs
 
 class CalcBinning(CalcPart):
     name = 'CalcBinning'
@@ -124,13 +124,49 @@ class PlotHistAggerwal(PlotPart):
 class PlotHistClassic(PlotPart):
     name = 'PlotHistClassic'
     rows = 5
-    def __init__(self):
-        pass
+    def __init__(self,
+                 log_y=True,
+                 bands=False):
+        self.log_y = log_y
+        self.bands = bands
 
     def execute(self, result_tray, component):
         super(PlotPart, self).execute(result_tray, component)
-        raise NotImplementedError
+        idx = component.idx
+        label = component.label
+        color = component.color
+        binning = result_tray.binning
+        bin_mids = (binning[1:] + binning[:-1]) / 2.
 
+        y_vals = result_tray.sum_w[1:-1, idx]
+        y_err = result_tray.rel_err[:, idx][1:-1] * y_vals
+        y_low = y_vals - y_err
+        y_high = y_vals + y_err
+
+        if self.bands:
+            plot_funcs.plot_hist(self.ax,
+                                 binning,
+                                 y_vals,
+                                 color)
+            plot_funcs.plot_band(self.ax,
+                                 binning,
+                                 y_low,
+                                 y_high,
+                                 color,
+                                 borders=False,
+                                 brighten=False,
+                                 alpha=1.0)
+        else:
+            plot_funcs.plot_hist(self.ax,
+                                 binning,
+                                 y_vals,
+                                 color,
+                                 yerr=y_err)
+        if self.log_y:
+            self.ax.set_yscale('log', clip=True)
+        self.ax.set_xlabel(result_tray.x_label)
+        self.ax.set_ylabel('Frequence')
+        return result_tray
 
 class PlotRatioAggerwal(PlotPart):
     name = 'PlotRatioAggerwal'
