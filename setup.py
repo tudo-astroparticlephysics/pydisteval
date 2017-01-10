@@ -77,6 +77,7 @@ setup(
             'sklearn',           # in anaconda
             'tables',
             'tqdm',
+            'scipy',
         ],
 
 
