@@ -10,14 +10,15 @@ class Part:
         self.n_executions = 0
 
     def execute(self, result_tray, component):
+        if self.n_executions == 0:
+            result_tray = self.start(result_tray)
         self.logger.debug('\t{}: Executing {}!'.format(self.name,
                                                        component.idx))
-        if self.n_executions == 0:
-            result_tray = self.first_execute(result_tray, component)
         self.n_executions += 1
         return result_tray
 
-    def first_execute(self, result_tray, component):
+    def start(self, result_tray):
+        self.logger.debug('\t{}: Starting!'.format(self.name))
         return result_tray
 
     def finish(self, result_tray=None):
@@ -48,7 +49,8 @@ class PlotPart(Part):
 
     def execute(self, result_tray, component):
         super(PlotPart, self).execute(result_tray, component)
-        self.first_execute(result_tray, component)
+        return result_tray
+
 
     def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1):
         self.logger.debug('\t{}: Setting up Axes!'.format(self.name))
