@@ -96,7 +96,6 @@ class CalcAggarwalHistoErrors(CalcPart):
                                    ' run \'CalcHistogram\' first!')
             else:
                 sum_w = result_tray.sum_w
-                sum_w_squared = result_tray.sum_w_squared
 
             scale_factor = result_tray.test_livetime / component.livetime
             mu = sum_w[:, component.idx] * scale_factor
@@ -196,10 +195,8 @@ class PlotHistClassic(PlotPart):
         result_tray = super(PlotHistClassic, self).execute(result_tray,
                                                            component)
         idx = component.idx
-        label = component.label
         color = component.color
         binning = result_tray.binning
-        bin_mids = (binning[1:] + binning[:-1]) / 2.
         y_vals = result_tray.sum_w[1:-1, component.idx]
         y_std = result_tray.rel_std_classic[1:-1, idx] * y_vals
         y_low = y_vals - y_std

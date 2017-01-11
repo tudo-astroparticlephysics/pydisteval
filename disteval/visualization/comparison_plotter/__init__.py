@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 
 from . import elements
 from .components import Component
-from .result_tray import ResultTray
+from .base_classes import ResultTray
 
 REGISTERED_ELEMENTS = {'aggarwalhisto': elements.AggarwalHisto,
                        'aggarwalratio': elements.AggarwalRatio,
@@ -14,6 +14,7 @@ REGISTERED_ELEMENTS = {'aggarwalhisto': elements.AggarwalHisto,
                        'normalization': elements.Normalization}
 
 logger = logging.getLogger("Plotter ")
+
 
 class ComparisonPlotter:
     def __init__(self, title=None, n_bins=50):
@@ -38,12 +39,12 @@ class ComparisonPlotter:
         element.register(self)
 
     def register_calc_part(self, part):
-        if not part in self.calc_parts:
+        if part not in self.calc_parts:
             logger.debug('\tRegistered {} (CalcPart)!'.format(part.name))
             self.calc_parts.append(part)
 
     def register_plot_part(self, part):
-        if not part in self.plot_parts:
+        if part not in self.plot_parts:
             logger.debug('\tRegistered {} (PlotPart)!'.format(part.name))
             self.plot_parts.append(part)
 
