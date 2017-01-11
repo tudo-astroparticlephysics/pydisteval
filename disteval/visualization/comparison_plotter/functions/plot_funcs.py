@@ -1,16 +1,15 @@
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 from matplotlib import pyplot as plt
-from matplotlib.gridspec import GridSpec
 import matplotlib.patches as mpatches
 from matplotlib.colors import ColorConverter
 from colorsys import rgb_to_hls, hls_to_rgb
 
-from IPython import embed
 
 from . import legend_entries as le
 
 MAIN_ZORDER = 4
+
 
 def modify_color(color,
                  d_saturation=0.,
@@ -61,9 +60,10 @@ def plot_inf_marker(fig,
                 transform=fig.transFigure,
                 figure=fig,
                 linewidth=1.,
-                zorder=MAIN_ZORDER+1,
+                zorder=MAIN_ZORDER + 1,
                 alpha=alpha))
     fig.patches.extend(patches)
+
 
 def plot_data_style(fig,
                     ax,
@@ -83,7 +83,7 @@ def plot_data_style(fig,
             markeredgecolor=edgecolor,
             markerfacecolor=facecolor,
             alpha=alpha,
-            zorder=MAIN_ZORDER+1)
+            zorder=MAIN_ZORDER + 1)
     plot_inf_marker(fig, ax,
                     bin_edges,
                     zero_mask,
@@ -160,7 +160,7 @@ def plot_band(ax,
                     edgecolor=band_color,
                     linewidth=0.0,
                     alpha=alpha,
-                    zorder=zorder-1)
+                    zorder=zorder - 1)
     if plot_borders:
         if brighten:
             band_color = modify_color(color, 0, 0.2)
@@ -184,6 +184,7 @@ def plot_band(ax,
     legend_obj = None
     return legend_obj
 
+
 def plot_hist(ax,
               bin_edges,
               y,
@@ -205,17 +206,18 @@ def plot_hist(ax,
     else:
         yerr_masked = None
     errorbar = ax.errorbar(x=bin_mids_masked,
-                                y=y_masked,
-                                ls='',
-                                xerr=xerr_masked,
-                                yerr=yerr_masked,
-                                color=color,
-                                markersize=0,
-                                capsize=0,
-                                lw=lw,
-                                zorder=zorder,
-                                label='Test')
+                           y=y_masked,
+                           ls='',
+                           xerr=xerr_masked,
+                           yerr=yerr_masked,
+                           color=color,
+                           markersize=0,
+                           capsize=0,
+                           lw=lw,
+                           zorder=zorder,
+                           label='Test')
     return errorbar
+
 
 def plot_line(ax,
               bin_edges,

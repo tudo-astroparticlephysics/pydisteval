@@ -26,7 +26,9 @@ def get_cmap_name():
         get_cmap_name.pointer = 0
     return CMAP_CYCLE[get_cmap_name.pointer]
 
+
 get_cmap_name.pointer = -1
+
 
 def get_color():
     get_color.pointer += 1
@@ -34,7 +36,9 @@ def get_color():
         get_color.pointer = 0
     return COLOR_CYCLE[get_color.pointer]
 
+
 get_color.pointer = -1
+
 
 class Component:
     def __init__(self, idx, label, c_type, X, livetime=1,

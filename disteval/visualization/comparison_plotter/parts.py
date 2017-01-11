@@ -1,7 +1,3 @@
-import logging
-
-from IPython import embed
-
 import numpy as np
 
 from matplotlib import pyplot as plt
@@ -12,9 +8,11 @@ from .functions import plot_funcs
 from .functions import calc_funcs
 from .functions import legend_entries as le
 
+
 class CalcBinning(CalcPart):
     name = 'CalcBinning'
     level = 0
+
     def __init__(self, n_bins=50, check_all=True):
         super(CalcBinning, self).__init__()
         self.n_bins = n_bins
@@ -79,6 +77,7 @@ class CalcHistogram(CalcPart):
 
 class CalcAggarwalHistoErrors(CalcPart):
     name = 'CalcAggarwalHistoErrors'
+
     def __init__(self, alpha):
         super(CalcAggarwalHistoErrors, self).__init__()
         self.alpha = alpha
@@ -117,6 +116,7 @@ class CalcAggarwalHistoErrors(CalcPart):
 
 class CalcClassicHistoErrors(CalcPart):
     name = 'CalcClassicHistoErrors'
+
     def execute(self, result_tray, component):
         result_tray = super(CalcClassicHistoErrors, self).execute(result_tray,
                                                                   component)
@@ -142,6 +142,7 @@ class CalcClassicHistoErrors(CalcPart):
 class CalcNormalization(CalcPart):
     name = 'CalcNormalization'
     level = 2
+
     def __init__(self,
                  normalize):
         super(CalcNormalization, self).__init__()
@@ -149,7 +150,7 @@ class CalcNormalization(CalcPart):
 
     def execute(self, result_tray, component):
         result_tray = super(CalcNormalization, self).execute(result_tray,
-                                                                  component)
+                                                             component)
         sum_w = result_tray.sum_w
         if self.normalize == 'test_livetime':
             scaling = result_tray.test_livetime / component.livetime
@@ -167,6 +168,7 @@ class CalcNormalization(CalcPart):
 class PlotHistClassic(PlotPart):
     name = 'PlotHistClassic'
     rows = 5
+
     def __init__(self,
                  log_y,
                  bands,
@@ -209,19 +211,19 @@ class PlotHistClassic(PlotPart):
                                            y=y_vals,
                                            color=color)
             _ = plot_funcs.plot_band(ax=self.ax,
-                                           bin_edges=binning,
-                                           y_err_low=y_low,
-                                           y_err_high=y_high,
-                                           color=color,
-                                           alpha=1.0,
-                                           borders=False,
-                                           brighten=False)
+                                     bin_edges=binning,
+                                     y_err_low=y_low,
+                                     y_err_high=y_high,
+                                     color=color,
+                                     alpha=1.0,
+                                     borders=False,
+                                     brighten=False)
         else:
             leg_obj = plot_funcs.plot_hist(ax=self.ax,
-                                     bin_edges=binning,
-                                     y=y_vals,
-                                     color=color,
-                                     yerr=y_std)
+                                           bin_edges=binning,
+                                           y=y_vals,
+                                           color=color,
+                                           yerr=y_std)
         if self.log_y:
             y_min = np.min(y_vals[y_vals > 0])
             if self.y_lower is None:
@@ -242,9 +244,11 @@ class PlotHistClassic(PlotPart):
                        loc='best',
                        prop={'size': 11})
 
+
 class PlotRatioClassic(PlotPart):
     name = 'PlotRatioClassic'
     rows = 1.5
+
     def __init__(self,
                  bands,
                  band_borders,
@@ -289,10 +293,8 @@ class PlotRatioClassic(PlotPart):
     def __execute_test__(self, result_tray, component):
         ref_idx = result_tray.ref_idx
         idx = component.idx
-        label = component.label
         color = component.color
         binning = result_tray.binning
-        bin_mids = (binning[1:] + binning[:-1]) / 2.
 
         y_vals = result_tray.sum_w[1:-1, idx]
         y_std = result_tray.rel_std_classic[:, idx][1:-1] * y_vals
@@ -339,7 +341,6 @@ class PlotRatioClassic(PlotPart):
 
     def finish(self, result_tray):
         result_tray = super(PlotRatioClassic, self).finish(result_tray)
-        current_y_lims = self.ax.get_ylim()
         if self.y_lims is None:
             self.ax.set_ylim([self.abs_max * -1.5,
                               self.abs_max * 1.5])
@@ -350,6 +351,7 @@ class PlotRatioClassic(PlotPart):
 class PlotHistAggerwal(PlotPart):
     name = 'PlotHistAggerwal'
     rows = 5
+
     def __init__(self,
                  log_y,
                  bands,
@@ -383,17 +385,17 @@ class PlotHistAggerwal(PlotPart):
 
         if component.c_type in ['ref', 'ref_part']:
             if component.c_type == 'ref':
-                part=False
+                part = False
             else:
-                part=True
+                part = True
             leg_objs, labels = self.__execute_ref__(result_tray,
-                                                     component,
-                                                     part=part)
+                                                    component,
+                                                    part=part)
         elif component.c_type in ['test', 'test_part']:
             if component.c_type == 'test':
-                part=False
+                part = False
             else:
-                part=True
+                part = True
             leg_objs, labels = self.__execute_test__(result_tray,
                                                      component,
                                                      part=part)
@@ -433,13 +435,13 @@ class PlotHistAggerwal(PlotPart):
             leg_objs = [line_obj]
         else:
             leg_objs = plot_funcs.plot_uncertainties(
-                        ax=self.ax,
-                        bin_edges=result_tray.binning,
-                        y=y_vals,
-                        uncert=result_tray.rel_std_aggarwal[1:-1],
-                        color=component.color,
-                        cmap=component.cmap,
-                        alpha=result_tray.alpha)
+                ax=self.ax,
+                bin_edges=result_tray.binning,
+                y=y_vals,
+                uncert=result_tray.rel_std_aggarwal[1:-1],
+                color=component.color,
+                cmap=component.cmap,
+                alpha=result_tray.alpha)
             labels = [component.label]
             for a_i in result_tray.alpha:
                 labels.append('      %.1f%% Uncert.' % (a_i * 100.))
@@ -460,6 +462,7 @@ class PlotHistAggerwal(PlotPart):
 class PlotRatioAggerwal(PlotPart):
     name = 'PlotRatioAggerwal'
     rows = 2
+
     def __init__(self, zoomed):
         super(PlotRatioAggerwal, self).__init__()
         self.zoomed = zoomed
@@ -480,8 +483,6 @@ class PlotRatioAggerwal(PlotPart):
         else:
             self.is_bot = False
             bot_offset = self.small_offset
-        height = y1 - y0
-        width = x1 - x0
         if self.zoomed:
             self.gs = GridSpec(2, 1,
                                left=x0 + 0.1,
@@ -489,8 +490,8 @@ class PlotRatioAggerwal(PlotPart):
                                top=y1 - top_offset,
                                bottom=y0 + bot_offset,
                                hspace=0.0)
-            self.ax_upper = plt.subplot(self.gs[0,:])
-            self.ax = plt.subplot(self.gs[1,:])
+            self.ax_upper = plt.subplot(self.gs[0, :])
+            self.ax = plt.subplot(self.gs[1, :])
             plt.setp(self.ax_upper.get_xticklabels(), visible=False)
         else:
             self.gs = GridSpec(1, 1,
@@ -498,7 +499,7 @@ class PlotRatioAggerwal(PlotPart):
                                right=x1 - 0.1,
                                top=y1 - top_offset,
                                bottom=y0 + bot_offset)
-            self.ax = plt.subplot(self.gs[:,:])
+            self.ax = plt.subplot(self.gs[:, :])
         return self.ax
 
     def get_ax(self):

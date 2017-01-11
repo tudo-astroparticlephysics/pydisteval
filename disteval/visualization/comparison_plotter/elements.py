@@ -26,6 +26,7 @@ class AggarwalHisto(Element):
 
 class ClassicHisto(Element):
     name = 'ClassicHisto'
+
     def __init__(self,
                  n_bins=50,
                  log_y=True,
@@ -46,6 +47,7 @@ class ClassicHisto(Element):
 
 class AggarwalRatio(Element):
     name = 'AggarwalRatio'
+
     def __init__(self, n_bins=50, alpha=[0.68, 0.9, 0.95], zoomed=True):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
@@ -75,8 +77,10 @@ class ClassicRatio(Element):
                                             y_label=y_label)
         self.plot_components.append(plot_ratio)
 
+
 class Normalization(Element):
     name = 'Normalization'
+
     def __init__(self, normalize=None):
         if normalize is None:
             normalize = False
@@ -85,7 +89,7 @@ class Normalization(Element):
                 normalize = 'sum_w'
             if isinstance(normalize, str):
                 normalize = normalize.lower()
-                if not normalize in ['test_livetime', 'livetime', 'sum_w']:
+                if normalize not in ['test_livetime', 'livetime', 'sum_w']:
                     raise AttributeError('Possible values for \'normalize\': '
                                          '[\'test_livetime\', \'livetime\', '
                                          '\'sum_w\', True, False]!')
