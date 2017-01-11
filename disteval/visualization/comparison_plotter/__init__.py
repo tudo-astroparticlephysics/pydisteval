@@ -23,7 +23,7 @@ class ComparisonPlotter:
         self.components = []
         self.ref_idx = 0
 
-    def add_plot_element(self, element, **kwargs):
+    def add_element(self, element, **kwargs):
         if isclass(element):
             element = element(**kwargs)
         elif isinstance(element, str):

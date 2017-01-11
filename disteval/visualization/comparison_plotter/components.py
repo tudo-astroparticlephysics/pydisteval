@@ -48,7 +48,8 @@ class Component:
         self.livetime = livetime
         self.weights = weights
         if color is None:
-            self.color = get_color()
+            color = get_color()
+        self.color = color
         if cmap is None and c_type == 'ref':
             self.cmap = plt.get_cmap(get_cmap_name())
         elif c_type != 'ref':
