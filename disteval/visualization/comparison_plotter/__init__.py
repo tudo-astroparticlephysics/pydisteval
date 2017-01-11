@@ -2,7 +2,6 @@ from inspect import isclass
 import logging
 
 from matplotlib import pyplot as plt
-from matplotlib.gridspec import GridSpec
 
 from . import elements
 from .components import Component
@@ -118,21 +117,30 @@ class ComparisonPlotter:
         if not isinstance(fig, plt.Figure):
             fig = plt.figure(figsize=figsize)
         total_rows = sum([part_i.get_rows() for part_i in self.plot_parts])
-        gs = GridSpec(nrows=total_rows, ncols=1)
-        row_pointer = 0
+        row_pointer = total_rows
         logger.debug('Starting Plotting...')
-        for part_i in self.plot_parts:
+        ax_dict = {}
+        for i, part_i in enumerate(self.plot_parts):
             part_rows = part_i.get_rows()
-            row_slice = slice(row_pointer, row_pointer + part_rows)
-            col_slice = slice(None)
-            part_i.set_ax(fig, gs[row_slice, col_slice])
-            row_pointer += part_rows
+            y1 = row_pointer / total_rows
+            y0 = (row_pointer - part_rows) / total_rows
+            x0 = 0.
+            x1 = 1.
+            part_i.set_ax(fig=fig,
+                          total_parts=len(self.plot_parts),
+                          idx=i,
+                          x0=x0,
+                          x1=x1,
+                          y0=y0,
+                          y1=y1)
+            row_pointer -= part_rows
             for comp_i in self.components:
                 result_tray = part_i.execute(result_tray, comp_i)
-            part_i.reset()
+            ax_dict[part_i.name] = part_i.ax
+            part_i.finish(result_tray)
         logger.debug('Finished!')
         fig.savefig('test.png')
-        return fig
+        return fig, ax_dict, result_tray
 
     def calc(self):
         logger.debug('Starting Calculating...')
@@ -154,9 +162,9 @@ class ComparisonPlotter:
         for part_i in self.calc_parts:
             for comp_i in self.components:
                 result_tray = part_i.execute(result_tray, comp_i)
-            part_i.reset()
+            part_i.finish(result_tray)
         logger.debug('Finished!')
         return result_tray
 
-    def reset(self):
+    def finish(self):
         self.components = []
