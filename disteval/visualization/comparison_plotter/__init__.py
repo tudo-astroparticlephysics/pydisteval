@@ -8,7 +8,7 @@ from .components import Component
 from .result_tray import ResultTray
 
 REGISTERED_ELEMENTS = {'aggarwalhisto': elements.AggarwalHisto,
-                       'aggarwalratio': elements.AggarwalHisto,
+                       'aggarwalratio': elements.AggarwalRatio,
                        'classichisto': elements.ClassicHisto,
                        'classicratio': elements.ClassicRatio,
                        'normalization': elements.Normalization}
@@ -22,6 +22,7 @@ class ComparisonPlotter:
         self.calc_parts = []
         self.components = []
         self.ref_idx = 0
+        self.fig = None
 
     def add_element(self, element, **kwargs):
         if isclass(element):
@@ -116,8 +117,8 @@ class ComparisonPlotter:
         result_tray = self.calc()
         result_tray.add(x_label, 'x_label')
         if not isinstance(fig, plt.Figure):
-            fig = plt.figure(figsize=figsize)
-        result_tray.add(fig, 'fig')
+            self.fig = plt.figure(figsize=figsize)
+        result_tray.add(self.fig, 'fig')
         total_rows = sum([part_i.get_rows() for part_i in self.plot_parts])
         row_pointer = total_rows
         logger.debug('Starting Plotting...')
@@ -128,7 +129,7 @@ class ComparisonPlotter:
             y0 = (row_pointer - part_rows) / total_rows
             x0 = 0.
             x1 = 1.
-            part_i.set_ax(fig=fig,
+            part_i.set_ax(fig=self.fig,
                           total_parts=len(self.plot_parts),
                           idx=i,
                           x0=x0,
@@ -138,11 +139,11 @@ class ComparisonPlotter:
             row_pointer -= part_rows
             for comp_i in self.components:
                 result_tray = part_i.execute(result_tray, comp_i)
-            ax_dict[part_i.name] = part_i.ax
+            ax_dict[part_i.name] = part_i.get_ax()
             part_i.finish(result_tray)
         logger.debug('Finished!')
-        fig.savefig('test.png')
-        return fig, ax_dict, result_tray
+        self.fig.savefig('test.png')
+        return self.fig, ax_dict, result_tray
 
     def calc(self):
         logger.debug('Starting Calculating...')
@@ -177,4 +178,5 @@ class ComparisonPlotter:
         return result_tray
 
     def finish(self):
+        plt.close(self.fig)
         self.components = []

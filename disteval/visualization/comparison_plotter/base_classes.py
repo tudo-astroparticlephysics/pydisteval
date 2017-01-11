@@ -77,6 +77,9 @@ class PlotPart(Part):
         self.ax = plt.subplot(self.gs[:,:])
         return self.ax
 
+    def get_ax(self):
+        return self.ax
+
     def get_rows(self):
         assert self.rows > 0, '\'rows\' must be greater 0!'
         return self.rows
