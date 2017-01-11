@@ -52,8 +52,6 @@ class CalcHistogram(CalcPart):
         idx = component.idx
 
         n_bins = len(binning) + 1
-        if component.c_type == 'ref':
-            result_tray.add(component.livetime, 'test_livetime')
         if not hasattr(result_tray, 'sum_w'):
             sum_w = np.zeros((n_bins, result_tray.n_components))
             sum_w_squared = np.zeros_like(sum_w)
@@ -116,7 +114,6 @@ class CalcAggarwalHistoErrors(CalcPart):
 
 class CalcClassicHistoErrors(CalcPart):
     name = 'CalcClassicHistoErrors'
-
     def execute(self, result_tray, component):
         result_tray = super(CalcClassicHistoErrors, self).execute(result_tray,
                                                                   component)
@@ -139,12 +136,35 @@ class CalcClassicHistoErrors(CalcPart):
         return result_tray
 
 
+class CalcNormalization(CalcPart):
+    name = 'CalcNormalization'
+    level = 2
+    def __init__(self,
+                 normalize):
+        super(CalcNormalization, self).__init__()
+        self.normalize = normalize
+
+    def execute(self, result_tray, component):
+        result_tray = super(CalcNormalization, self).execute(result_tray,
+                                                                  component)
+        sum_w = result_tray.sum_w
+        if self.normalize == 'test_livetime':
+            scaling = result_tray.test_livetime / component.livetime
+        elif self.normalize == 'livetime':
+            scaling = 1. / component.livetime
+        elif self.normalize == 'sum_w':
+            scaling = 1. / np.sum(sum_w)
+        else:
+            scaling = 1.
+        sum_w[:, component.idx] *= scaling
+        result_tray.add(sum_w, 'sum_w')
+        return result_tray
+
 class PlotHistAggerwal(PlotPart):
     name = 'PlotHistAggerwal'
     rows = 5
     def __init__(self,
                  log_y,
-                 normalize,
                  bands,
                  band_borders,
                  band_brighten,
@@ -152,8 +172,9 @@ class PlotHistAggerwal(PlotPart):
         super(PlotHistAggerwal, self).__init__()
         self.log_y = log_y
         self.bands = bands
-        self.normalize = normalize
         self.y_lower = None
+        self.leg_labels = []
+        self.leg_entries = []
 
     def start(self, result_tray):
         result_tray = super(PlotHistAggerwal, self).start(result_tray)
@@ -173,36 +194,25 @@ class PlotHistAggerwal(PlotPart):
             else:
                 self.y_lower = min(self.y_lower, y_min)
 
-        if not hasattr(result_tray, 'legend_handles'):
-            result_tray.add([], 'legend_labels')
-            result_tray.add([], 'legend_handles')
+        if component.c_type in ['ref', 'ref_part']:
+            if component.c_type == 'ref':
+                part=False
+            else:
+                part=True
+            leg_objs, labels = self.__execute_ref__(result_tray,
+                                                     component,
+                                                     part=part)
+        elif component.c_type in ['test', 'test_part']:
+            if component.c_type == 'test':
+                part=False
+            else:
+                part=True
+            leg_objs, labels = self.__execute_test__(result_tray,
+                                                     component,
+                                                     part=part)
 
-        if component.c_type == 'ref':
-            leg_obj = self.__execute_ref__(result_tray,
-                                           component,
-                                           part=False)
-            result_tray.legend_labels.append(component.label)
-            result_tray.legend_handles.append(leg_obj)
-        elif component.c_type == 'test':
-            leg_obj = self.__execute_test__(result_tray,
-                                           component,
-                                           part=False)
-
-                legend_labels.append('      %.1f%% Uncert.' % (a * 100.))
-            result_tray.legend_labels.append(component.label)
-            result_tray.legend_handles.append(leg_obj)
-        elif component.c_type == 'ref_part':
-            leg_obj = self.__execute_ref__(result_tray,
-                                           component,
-                                           part=True)
-            result_tray.legend_labels.append(component.label)
-            result_tray.legend_handles.append(leg_obj)
-        elif component.c_type == 'test_part':
-            leg_obj = self.__execute_test__(result_tray,
-                                           component,
-                                           part=True)
-            result_tray.legend_labels.append(component.label)
-            result_tray.legend_handles.append(leg_obj)
+        self.leg_labels.extend(labels)
+        self.leg_entries.extend(leg_objs)
         return result_tray
 
     def __execute_test__(self, result_tray, component, part=False):
@@ -223,29 +233,39 @@ class PlotHistAggerwal(PlotPart):
                                                  facecolor=component.color,
                                                  edgecolor='k',
                                                  alpha=1.0)
-        return leg_obj
+        return [leg_obj], [component.label]
 
     def __execute_ref__(self, result_tray, component, part=False):
         y_vals = result_tray.sum_w[1:-1, component.idx]
-        leg_obj = plot_funcs.plot_line(ax=self.ax,
-                                       bin_edges=result_tray.binning,
-                                       y=y_vals,
-                                       color=component.color)
-        if not part:
-            leg_obj = plot_funcs.plot_uncertainties(
-                ax=self.ax,
-                bin_edges=result_tray.binning,
-                y=y_vals,
-                color=component.color)
-        return leg_obj
+        line_obj = plot_funcs.plot_line(ax=self.ax,
+                                        bin_edges=result_tray.binning,
+                                        y=y_vals,
+                                        color=component.color)
+        if part:
+            labels = [component.labels]
+            leg_objs = [line_obj]
+        else:
+            leg_objs = plot_funcs.plot_uncertainties(
+                        ax=self.ax,
+                        bin_edges=result_tray.binning,
+                        y=y_vals,
+                        uncert=result_tray.rel_std_aggarwal[1:-1],
+                        color=component.color,
+                        cmap=component.cmap,
+                        alpha=result_tray.alpha)
+            labels = [component.label]
+            for a_i in result_tray.alpha:
+                labels.append('      %.1f%% Uncert.' % (a_i * 100.))
+        return leg_objs, labels
 
     def finish(self, result_tray):
         result_tray = super(PlotHistAggerwal, self).finish(result_tray)
         if self.log_y:
             current_y_lims = self.ax.get_ylim()
             self.ax.set_ylim([self.y_lower * 0.5, current_y_lims[1]])
-        self.ax.legend(result_tray.legend_handles,
-                       result_tray.legend_labels,
+        print(self)
+        self.ax.legend(self.leg_entries,
+                       self.leg_labels,
                        handler_map=le.handler_mapper,
                        loc='best',
                        prop={'size': 11})
@@ -256,7 +276,6 @@ class PlotHistClassic(PlotPart):
     rows = 5
     def __init__(self,
                  log_y,
-                 normalize,
                  bands,
                  band_borders,
                  band_brighten,
@@ -264,10 +283,11 @@ class PlotHistClassic(PlotPart):
         super(PlotHistClassic, self).__init__()
         self.log_y = log_y
         self.bands = bands
-        self.normalize = normalize
         self.band_borders = band_borders
         self.band_brighten = band_brighten
         self.band_alpha = band_alpha
+        self.leg_labels = []
+        self.leg_entries = []
         self.y_lower = None
 
     def start(self, result_tray):
@@ -285,17 +305,7 @@ class PlotHistClassic(PlotPart):
         color = component.color
         binning = result_tray.binning
         bin_mids = (binning[1:] + binning[:-1]) / 2.
-        if self.normalize == 'test_livetime':
-            y_vals_unnormed = result_tray.sum_w[1:-1, idx]
-            y_vals = y_vals_unnormed / component.livetime
-        if self.normalize == 'livetime':
-            y_vals_unnormed = result_tray.sum_w[1:-1, idx]
-            y_vals = y_vals_unnormed / result_tray.test_livetime
-        if self.normalize == 'sum_w':
-            y_vals_unnormed = result_tray.sum_w[1:-1, idx]
-            y_vals = y_vals_unnormed / np.sum(y_vals_unnormed)
-        else:
-            y_vals = result_tray.sum_w[1:-1, idx]
+        y_vals = result_tray.sum_w[1:-1, component.idx]
         y_std = result_tray.rel_std_classic[1:-1, idx] * y_vals
         y_low = y_vals - y_std
         y_high = y_vals + y_std
@@ -319,18 +329,14 @@ class PlotHistClassic(PlotPart):
                                      y=y_vals,
                                      color=color,
                                      yerr=y_std)
-        if hasattr(result_tray, 'legend_handles'):
-            result_tray.legend_labels.append(label)
-            result_tray.legend_handles.append(leg_obj)
-        else:
-            result_tray.add([label], 'legend_labels')
-            result_tray.add([leg_obj], 'legend_handles')
         if self.log_y:
             y_min = np.min(y_vals[y_vals > 0])
             if self.y_lower is None:
                 self.y_lower = y_min
             else:
                 self.y_lower = min(self.y_lower, y_min)
+        self.leg_entries.append(leg_obj)
+        self.leg_labels.append(component.label)
         return result_tray
 
     def finish(self, result_tray):
@@ -338,8 +344,8 @@ class PlotHistClassic(PlotPart):
         if self.log_y:
             current_y_lims = self.ax.get_ylim()
             self.ax.set_ylim([self.y_lower * 0.5, current_y_lims[1]])
-        self.ax.legend(result_tray.legend_handles,
-                       result_tray.legend_labels,
+        self.ax.legend(self.leg_entries,
+                       self.leg_labels,
                        loc='best',
                        prop={'size': 11})
 

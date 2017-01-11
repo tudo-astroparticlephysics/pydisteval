@@ -95,54 +95,34 @@ def plot_data_style(fig,
                          facecolor,
                          edgecolor)
 
-def plot_mc_style(fig,
-                  ax,
-                  bin_edges,
-                  y,
-                  color,
-                  cmap,
-                  lw=1.6):
-        obj, = ax.plot(binning,
-                      np.append(hist[0], hist),
-                      drawstyle='steps-pre',
-                      lw=linewidth,
-                      c=color,
-                      label=label,
-                      zorder=ZORDER)
-        return obj
 
-
-def plot_uncertainties(fig, ax, bin_edges, y, uncert, color, cmap, alphas):
-    _, _ = plot_mc_style(fig,
-                         ax,
-                         hist,
-                         binning,
-                         label,
-                         color,
-                         linewidth=LW - 1.)
-    ax.set_xlim(binning[0], binning[-1])
-    n_alphas = len(alphas)
+def plot_uncertainties(ax, bin_edges, y, uncert, color, cmap, alpha):
+    n_alpha = len(alpha)
     cmap = plt.get_cmap(cmap)
-    colors = cmap(np.linspace(0.1, 0.9, len(alphas)))
+    colors = cmap(np.linspace(0.1, 0.9, len(alpha)))
     legend_entries = []
-    legend_labels = []
     legend_entries.append(le.UncertObject(colors, color))
-    legend_labels.append(label)
-    for i, (c, a) in enumerate(zip(colors[::-1], alphas[::-1])):
-        j = n_alphas - i - 1
-        lower_limit = uncert[:, j, 0] * hist
-        upper_limit = uncert[:, j, 1] * hist
-        ax.fill_between(
-            binning,
-            np.append(lower_limit[0], lower_limit),
-            np.append(upper_limit[0], upper_limit),
-            step='pre',
-            color=c,
-            zorder=ZORDER)
-    for i, (c, a) in enumerate(zip(colors, alphas)):
+    for i, (c, a) in enumerate(zip(colors[::-1], alpha[::-1])):
+        j = n_alpha - i - 1
+        lower_limit = uncert[:, j, 0] * y
+        upper_limit = uncert[:, j, 1] * y
+        mask = np.isfinite(lower_limit)
+        lower_limit[~mask] = 0.
+        mask = np.isfinite(upper_limit)
+        upper_limit[~mask] = 0.
+        plot_band(ax,
+                  bin_edges,
+                  lower_limit,
+                  upper_limit,
+                  c,
+                  alpha=1.,
+                  borders=False,
+                  brighten=False,
+                  zorder=MAIN_ZORDER)
+    for i, (c, a) in enumerate(zip(colors, alpha)):
         legend_entries.append(le.UncertObject_single(c))
-        legend_labels.append('      %.1f%% Uncert.' % (a * 100.))
-    return legend_entries, legend_labels
+    return legend_entries
+
 
 def plot_band(ax,
               bin_edges,

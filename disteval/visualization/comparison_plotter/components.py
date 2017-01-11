@@ -45,7 +45,7 @@ class Component:
         self.label = label
         self.c_type = c_type
         self.X = X
-        self.livetime = 1
+        self.livetime = livetime
         self.weights = weights
         if color is None:
             self.color = get_color()

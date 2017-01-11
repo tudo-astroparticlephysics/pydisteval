@@ -10,7 +10,8 @@ from .result_tray import ResultTray
 REGISTERED_ELEMENTS = {'aggarwalhisto': elements.AggarwalHisto,
                        'aggarwalratio': elements.AggarwalHisto,
                        'classichisto': elements.ClassicHisto,
-                       'classicratio': elements.ClassicRatio}
+                       'classicratio': elements.ClassicRatio,
+                       'normalization': elements.Normalization}
 
 logger = logging.getLogger("Plotter ")
 
@@ -147,8 +148,8 @@ class ComparisonPlotter:
         logger.debug('Starting Calculating...')
         result_tray = ResultTray()
         n_components = len(self.components)
-        sorted(self.calc_parts)
-        sorted(self.components)
+        self.calc_parts = sorted(self.calc_parts)
+        self.components = sorted(self.components)
         ref_idx = None
         test_idx = None
         for i, comp in enumerate(self.components):
