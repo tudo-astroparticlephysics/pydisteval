@@ -6,6 +6,8 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import ColorConverter
 from colorsys import rgb_to_hls, hls_to_rgb
 
+from IPython import embed
+
 from . import legend_entries as le
 
 MAIN_ZORDER = 4
@@ -24,10 +26,16 @@ def modify_color(color,
     return hls_to_rgb(hls_color[0], new_l, new_s)
 
 
-def plot_inf_marker(fig, ax, binning, zero_mask, markeredgecolor='k',
-                    markerfacecolor='none', bot=True, alpha=1.):
+def plot_inf_marker(fig,
+                    ax,
+                    binning,
+                    zero_mask,
+                    markeredgecolor='k',
+                    markerfacecolor='none',
+                    bot=True,
+                    alpha=1.):
     patches = []
-    radius = 0.004
+    radius = 0.005
     bbox = ax.get_position()
     x_0 = bbox.x0
     width = bbox.x1 - bbox.x0
@@ -53,9 +61,88 @@ def plot_inf_marker(fig, ax, binning, zero_mask, markeredgecolor='k',
                 transform=fig.transFigure,
                 figure=fig,
                 linewidth=1.,
-                zorder=ZORDER+1,
+                zorder=MAIN_ZORDER+1,
                 alpha=alpha))
     fig.patches.extend(patches)
+
+def plot_data_style(fig,
+                    ax,
+                    bin_edges,
+                    y,
+                    facecolor,
+                    edgecolor,
+                    alpha,
+                    ms='5'):
+    zero_mask = y > 0
+    bin_center = (bin_edges[1:] + bin_edges[:-1]) / 2.
+    ax.plot(bin_center[zero_mask],
+            y[zero_mask],
+            ls='', ms=ms,
+            mew=1.,
+            marker='o',
+            markeredgecolor=edgecolor,
+            markerfacecolor=facecolor,
+            alpha=alpha,
+            zorder=MAIN_ZORDER+1)
+    plot_inf_marker(fig, ax,
+                    bin_edges,
+                    zero_mask,
+                    markerfacecolor=facecolor,
+                    markeredgecolor=edgecolor,
+                    alpha=alpha)
+    return le.DataObject(facecolor,
+                         edgecolor,
+                         facecolor,
+                         edgecolor)
+
+def plot_mc_style(fig,
+                  ax,
+                  bin_edges,
+                  y,
+                  color,
+                  cmap,
+                  lw=1.6):
+        obj, = ax.plot(binning,
+                      np.append(hist[0], hist),
+                      drawstyle='steps-pre',
+                      lw=linewidth,
+                      c=color,
+                      label=label,
+                      zorder=ZORDER)
+        return obj
+
+
+def plot_uncertainties(fig, ax, bin_edges, y, uncert, color, cmap, alphas):
+    _, _ = plot_mc_style(fig,
+                         ax,
+                         hist,
+                         binning,
+                         label,
+                         color,
+                         linewidth=LW - 1.)
+    ax.set_xlim(binning[0], binning[-1])
+    n_alphas = len(alphas)
+    cmap = plt.get_cmap(cmap)
+    colors = cmap(np.linspace(0.1, 0.9, len(alphas)))
+    legend_entries = []
+    legend_labels = []
+    legend_entries.append(le.UncertObject(colors, color))
+    legend_labels.append(label)
+    for i, (c, a) in enumerate(zip(colors[::-1], alphas[::-1])):
+        j = n_alphas - i - 1
+        lower_limit = uncert[:, j, 0] * hist
+        upper_limit = uncert[:, j, 1] * hist
+        ax.fill_between(
+            binning,
+            np.append(lower_limit[0], lower_limit),
+            np.append(upper_limit[0], upper_limit),
+            step='pre',
+            color=c,
+            zorder=ZORDER)
+    for i, (c, a) in enumerate(zip(colors, alphas)):
+        legend_entries.append(le.UncertObject_single(c))
+        legend_labels.append('      %.1f%% Uncert.' % (a * 100.))
+    return legend_entries, legend_labels
 
 def plot_band(ax,
               bin_edges,
@@ -113,6 +200,9 @@ def plot_band(ax,
                   lw=border_lw,
                   alpha=1.0,
                   zorder=zorder)
+    # legend_obj = le.
+    legend_obj = None
+    return legend_obj
 
 def plot_hist(ax,
               bin_edges,
@@ -134,13 +224,35 @@ def plot_hist(ax,
         yerr_masked = yerr[nan_mask]
     else:
         yerr_masked = None
-    ax.errorbar(x=bin_mids_masked,
-                y=y_masked,
-                ls='',
-                xerr=xerr_masked,
-                yerr=yerr_masked,
-                color=color,
-                markersize=0,
-                capsize=0,
-                lw=lw,
-                zorder=zorder)
+    errorbar = ax.errorbar(x=bin_mids_masked,
+                                y=y_masked,
+                                ls='',
+                                xerr=xerr_masked,
+                                yerr=yerr_masked,
+                                color=color,
+                                markersize=0,
+                                capsize=0,
+                                lw=lw,
+                                zorder=zorder,
+                                label='Test')
+    return errorbar
+
+def plot_line(ax,
+              bin_edges,
+              y,
+              color,
+              lw=1.6,
+              alpha=1.0,
+              zorder=None):
+    if zorder is None:
+        zorder = MAIN_ZORDER
+    alpha = min(1., max(0., alpha))
+    obj, = ax.plot(bin_edges,
+                   np.append(y[0], y),
+                   drawstyle='steps-pre',
+                   lw=lw,
+                   c=color,
+                   label='test',
+                   alpha=alpha,
+                   zorder=zorder)
+    return obj

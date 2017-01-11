@@ -116,6 +116,7 @@ class ComparisonPlotter:
         result_tray.add(x_label, 'x_label')
         if not isinstance(fig, plt.Figure):
             fig = plt.figure(figsize=figsize)
+        result_tray.add(fig, 'fig')
         total_rows = sum([part_i.get_rows() for part_i in self.plot_parts])
         row_pointer = total_rows
         logger.debug('Starting Plotting...')
@@ -149,6 +150,7 @@ class ComparisonPlotter:
         sorted(self.calc_parts)
         sorted(self.components)
         ref_idx = None
+        test_idx = None
         for i, comp in enumerate(self.components):
             comp.idx = i
             if comp.c_type == 'ref':
@@ -156,9 +158,16 @@ class ComparisonPlotter:
                     ref_idx = i
                 else:
                     raise RuntimeError('More than one ref component added!')
+            elif comp.c_type == 'test':
+                if test_idx is None:
+                    test_idx = i
+                else:
+                    raise RuntimeError('More than one ref component added!')
         result_tray.add(n_components, 'n_components')
         result_tray.add(ref_idx, 'ref_idx')
+        result_tray.add(test_idx, 'test_idx')
         result_tray.add(self.components[ref_idx].livetime, 'ref_livetime')
+        result_tray.add(self.components[test_idx].livetime, 'test_livetime')
         for part_i in self.calc_parts:
             for comp_i in self.components:
                 result_tray = part_i.execute(result_tray, comp_i)
