@@ -114,3 +114,8 @@ class Element:
             return self.name == other.name
         elif isinstance(other, str):
             return self.name == other
+
+
+class ResultTray:
+    def add(self, obj, name):
+        setattr(self, name, obj)
