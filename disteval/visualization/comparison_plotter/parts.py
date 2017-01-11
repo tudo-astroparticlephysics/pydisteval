@@ -4,6 +4,9 @@ from IPython import embed
 
 import numpy as np
 
+from matplotlib import pyplot as plt
+from matplotlib.gridspec import GridSpec
+
 from .base_classes import CalcPart, PlotPart
 from .functions import plot_funcs
 from .functions import calc_funcs
@@ -456,11 +459,57 @@ class PlotHistAggerwal(PlotPart):
 
 class PlotRatioAggerwal(PlotPart):
     name = 'PlotRatioAggerwal'
-    rows = 1
-    def __init__(self):
+    rows = 2
+    def __init__(self, zoomed):
         super(PlotRatioAggerwal, self).__init__()
+        self.zoomed = zoomed
+        if zoomed:
+            self.rows = 3
+
+    def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1):
+        self.logger.debug('\t{}: Setting up Axes!'.format(self.name))
+        if idx == 0:
+            self.is_top = True
+            top_offset = self.large_offset
+        else:
+            self.is_bot = False
+            top_offset = self.small_offset
+        if idx == total_parts - 1:
+            self.is_bot = True
+            bot_offset = self.large_offset
+        else:
+            self.is_bot = False
+            bot_offset = self.small_offset
+        height = y1 - y0
+        width = x1 - x0
+        if self.zoomed:
+            self.gs = GridSpec(2, 1,
+                               left=x0 + 0.1,
+                               right=x1 - 0.1,
+                               top=y1 - top_offset,
+                               bottom=y0 + bot_offset,
+                               hspace=0.0)
+            self.ax_upper = plt.subplot(self.gs[0,:])
+            self.ax = plt.subplot(self.gs[1,:])
+            plt.setp(self.ax_upper.get_xticklabels(), visible=False)
+        else:
+            self.gs = GridSpec(1, 1,
+                               left=x0 + 0.1,
+                               right=x1 - 0.1,
+                               top=y1 - top_offset,
+                               bottom=y0 + bot_offset)
+            self.ax = plt.subplot(self.gs[:,:])
+        return self.ax
+
+    def get_ax(self):
+        return [self.ax, self.ax_upper]
+
+    def finish(self, result_tray):
+        super(PlotRatioAggerwal, self).finish(result_tray)
+        self.ax_upper.set_xlim([result_tray.binning[0],
+                                result_tray.binning[-1]])
 
     def execute(self, result_tray, component):
         result_tray = super(PlotRatioAggerwal, self).execute(result_tray,
                                                              component)
-        raise NotImplementedError
+        return result_tray

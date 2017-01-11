@@ -46,11 +46,11 @@ class ClassicHisto(Element):
 
 class AggarwalRatio(Element):
     name = 'AggarwalRatio'
-    def __init__(self, n_bins=50, alpha=[0.68, 0.9, 0.95]):
+    def __init__(self, n_bins=50, alpha=[0.68, 0.9, 0.95], zoomed=True):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcAggarwalHistoErrors(alpha))
-        self.plot_components.append(parts.PlotRatioAggerwal())
+        self.plot_components.append(parts.PlotRatioAggerwal(zoomed=zoomed))
 
 
 class ClassicRatio(Element):
