@@ -160,116 +160,6 @@ class CalcNormalization(CalcPart):
         result_tray.add(sum_w, 'sum_w')
         return result_tray
 
-class PlotHistAggerwal(PlotPart):
-    name = 'PlotHistAggerwal'
-    rows = 5
-    def __init__(self,
-                 log_y,
-                 bands,
-                 band_borders,
-                 band_brighten,
-                 band_alpha):
-        super(PlotHistAggerwal, self).__init__()
-        self.log_y = log_y
-        self.bands = bands
-        self.y_lower = None
-        self.leg_labels = []
-        self.leg_entries = []
-
-    def start(self, result_tray):
-        result_tray = super(PlotHistAggerwal, self).start(result_tray)
-        if self.log_y:
-            self.ax.set_yscale('log', clip=True)
-        self.ax.set_ylabel('Frequence')
-        return result_tray
-
-    def execute(self, result_tray, component):
-        result_tray = super(PlotHistAggerwal, self).execute(result_tray,
-                                                            component)
-        y_vals = result_tray.sum_w[1:-1, component.idx]
-        if self.log_y:
-            y_min = np.min(y_vals[y_vals > 0])
-            if self.y_lower is None:
-                self.y_lower = y_min
-            else:
-                self.y_lower = min(self.y_lower, y_min)
-
-        if component.c_type in ['ref', 'ref_part']:
-            if component.c_type == 'ref':
-                part=False
-            else:
-                part=True
-            leg_objs, labels = self.__execute_ref__(result_tray,
-                                                     component,
-                                                     part=part)
-        elif component.c_type in ['test', 'test_part']:
-            if component.c_type == 'test':
-                part=False
-            else:
-                part=True
-            leg_objs, labels = self.__execute_test__(result_tray,
-                                                     component,
-                                                     part=part)
-
-        self.leg_labels.extend(labels)
-        self.leg_entries.extend(leg_objs)
-        return result_tray
-
-    def __execute_test__(self, result_tray, component, part=False):
-        y_vals = result_tray.sum_w[1:-1, component.idx]
-        if part:
-            leg_obj = plot_funcs.plot_data_style(fig=result_tray.fig,
-                                                 ax=self.ax,
-                                                 bin_edges=result_tray.binning,
-                                                 y=y_vals,
-                                                 facecolor=component.color,
-                                                 edgecolor='none',
-                                                 alpha=1.0)
-        else:
-            leg_obj = plot_funcs.plot_data_style(fig=result_tray.fig,
-                                                 ax=self.ax,
-                                                 bin_edges=result_tray.binning,
-                                                 y=y_vals,
-                                                 facecolor=component.color,
-                                                 edgecolor='k',
-                                                 alpha=1.0)
-        return [leg_obj], [component.label]
-
-    def __execute_ref__(self, result_tray, component, part=False):
-        y_vals = result_tray.sum_w[1:-1, component.idx]
-        line_obj = plot_funcs.plot_line(ax=self.ax,
-                                        bin_edges=result_tray.binning,
-                                        y=y_vals,
-                                        color=component.color)
-        if part:
-            labels = [component.labels]
-            leg_objs = [line_obj]
-        else:
-            leg_objs = plot_funcs.plot_uncertainties(
-                        ax=self.ax,
-                        bin_edges=result_tray.binning,
-                        y=y_vals,
-                        uncert=result_tray.rel_std_aggarwal[1:-1],
-                        color=component.color,
-                        cmap=component.cmap,
-                        alpha=result_tray.alpha)
-            labels = [component.label]
-            for a_i in result_tray.alpha:
-                labels.append('      %.1f%% Uncert.' % (a_i * 100.))
-        return leg_objs, labels
-
-    def finish(self, result_tray):
-        result_tray = super(PlotHistAggerwal, self).finish(result_tray)
-        if self.log_y:
-            current_y_lims = self.ax.get_ylim()
-            self.ax.set_ylim([self.y_lower * 0.5, current_y_lims[1]])
-        print(self)
-        self.ax.legend(self.leg_entries,
-                       self.leg_labels,
-                       handler_map=le.handler_mapper,
-                       loc='best',
-                       prop={'size': 11})
-
 
 class PlotHistClassic(PlotPart):
     name = 'PlotHistClassic'
@@ -349,18 +239,6 @@ class PlotHistClassic(PlotPart):
                        loc='best',
                        prop={'size': 11})
 
-class PlotRatioAggerwal(PlotPart):
-    name = 'PlotRatioAggerwal'
-    rows = 1
-    def __init__(self):
-        super(PlotRatioAggerwal, self).__init__()
-
-    def execute(self, result_tray, component):
-        result_tray = super(PlotRatioAggerwal, self).execute(result_tray,
-                                                             component)
-        raise NotImplementedError
-
-
 class PlotRatioClassic(PlotPart):
     name = 'PlotRatioClassic'
     rows = 1.5
@@ -390,8 +268,8 @@ class PlotRatioClassic(PlotPart):
         result_tray = super_func(result_tray, component)
         if component.c_type == 'ref':
             self.__execute_ref__(result_tray, component)
-        else:
-            self.__execute_others__(result_tray, component)
+        elif component.c_type == 'test':
+            self.__execute_test__(result_tray, component)
         return result_tray
 
     def __execute_ref__(self, result_tray, component):
@@ -405,7 +283,7 @@ class PlotRatioClassic(PlotPart):
                              yerr=None)
         return result_tray
 
-    def __execute_others__(self, result_tray, component):
+    def __execute_test__(self, result_tray, component):
         ref_idx = result_tray.ref_idx
         idx = component.idx
         label = component.label
@@ -464,3 +342,125 @@ class PlotRatioClassic(PlotPart):
                               self.abs_max * 1.5])
         else:
             self.ax.set_ylim(self.y_lims)
+
+
+class PlotHistAggerwal(PlotPart):
+    name = 'PlotHistAggerwal'
+    rows = 5
+    def __init__(self,
+                 log_y,
+                 bands,
+                 band_borders,
+                 band_brighten,
+                 band_alpha):
+        super(PlotHistAggerwal, self).__init__()
+        self.log_y = log_y
+        self.bands = bands
+        self.y_lower = None
+        self.leg_labels = []
+        self.leg_entries = []
+
+    def start(self, result_tray):
+        result_tray = super(PlotHistAggerwal, self).start(result_tray)
+        if self.log_y:
+            self.ax.set_yscale('log', clip=True)
+        self.ax.set_ylabel('Frequence')
+        return result_tray
+
+    def execute(self, result_tray, component):
+        result_tray = super(PlotHistAggerwal, self).execute(result_tray,
+                                                            component)
+        y_vals = result_tray.sum_w[1:-1, component.idx]
+        if self.log_y:
+            y_min = np.min(y_vals[y_vals > 0])
+            if self.y_lower is None:
+                self.y_lower = y_min
+            else:
+                self.y_lower = min(self.y_lower, y_min)
+
+        if component.c_type in ['ref', 'ref_part']:
+            if component.c_type == 'ref':
+                part=False
+            else:
+                part=True
+            leg_objs, labels = self.__execute_ref__(result_tray,
+                                                     component,
+                                                     part=part)
+        elif component.c_type in ['test', 'test_part']:
+            if component.c_type == 'test':
+                part=False
+            else:
+                part=True
+            leg_objs, labels = self.__execute_test__(result_tray,
+                                                     component,
+                                                     part=part)
+
+        self.leg_labels.extend(labels)
+        self.leg_entries.extend(leg_objs)
+        return result_tray
+
+    def __execute_test__(self, result_tray, component, part=False):
+        y_vals = result_tray.sum_w[1:-1, component.idx]
+        if part:
+            leg_obj = plot_funcs.plot_data_style(fig=result_tray.fig,
+                                                 ax=self.ax,
+                                                 bin_edges=result_tray.binning,
+                                                 y=y_vals,
+                                                 facecolor='none',
+                                                 edgecolor=component.color,
+                                                 alpha=1.0)
+        else:
+            leg_obj = plot_funcs.plot_data_style(fig=result_tray.fig,
+                                                 ax=self.ax,
+                                                 bin_edges=result_tray.binning,
+                                                 y=y_vals,
+                                                 facecolor=component.color,
+                                                 edgecolor='k',
+                                                 alpha=1.0)
+        return [leg_obj], [component.label]
+
+    def __execute_ref__(self, result_tray, component, part=False):
+        y_vals = result_tray.sum_w[1:-1, component.idx]
+        line_obj = plot_funcs.plot_line(ax=self.ax,
+                                        bin_edges=result_tray.binning,
+                                        y=y_vals,
+                                        color=component.color)
+        if part:
+            labels = [component.label]
+            leg_objs = [line_obj]
+        else:
+            leg_objs = plot_funcs.plot_uncertainties(
+                        ax=self.ax,
+                        bin_edges=result_tray.binning,
+                        y=y_vals,
+                        uncert=result_tray.rel_std_aggarwal[1:-1],
+                        color=component.color,
+                        cmap=component.cmap,
+                        alpha=result_tray.alpha)
+            labels = [component.label]
+            for a_i in result_tray.alpha:
+                labels.append('      %.1f%% Uncert.' % (a_i * 100.))
+        return leg_objs, labels
+
+    def finish(self, result_tray):
+        result_tray = super(PlotHistAggerwal, self).finish(result_tray)
+        if self.log_y:
+            current_y_lims = self.ax.get_ylim()
+            self.ax.set_ylim([self.y_lower * 0.5, current_y_lims[1]])
+        self.ax.legend(self.leg_entries,
+                       self.leg_labels,
+                       handler_map=le.handler_mapper,
+                       loc='best',
+                       prop={'size': 11})
+
+
+class PlotRatioAggerwal(PlotPart):
+    name = 'PlotRatioAggerwal'
+    rows = 1
+    def __init__(self):
+        super(PlotRatioAggerwal, self).__init__()
+
+    def execute(self, result_tray, component):
+        result_tray = super(PlotRatioAggerwal, self).execute(result_tray,
+                                                             component)
+        raise NotImplementedError
