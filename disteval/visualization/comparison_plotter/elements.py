@@ -24,9 +24,9 @@ class ClassicHisto(Element):
                  log_y=True,
                  normalize=False,
                  bands=False,
-                 band_borders=False,
-                 band_brighten=False,
-                 band_alpha=0.0):
+                 band_borders=True,
+                 band_brighten=True,
+                 band_alpha=0.5):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcClassicHistoErrors())
@@ -55,14 +55,18 @@ class ClassicRatio(Element):
     def __init__(self,
                  n_bins=50,
                  bands=False,
-                 band_borders=False,
-                 band_brighten=False,
-                 band_alpha=0.0):
+                 band_borders=True,
+                 band_brighten=True,
+                 band_alpha=0.5,
+                 y_lims=None,
+                 y_label=r'$\frac{\mathregular{Test - Ref}}{\sigma}$'):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcClassicHistoErrors())
         plot_ratio = parts.PlotRatioClassic(bands=bands,
                                             band_borders=band_borders,
                                             band_brighten=band_brighten,
-                                            band_alpha=band_alpha)
+                                            band_alpha=band_alpha,
+                                            y_lims=y_lims,
+                                            y_label=y_label)
         self.plot_components.append(plot_ratio)
