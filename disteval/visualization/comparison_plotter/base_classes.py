@@ -2,10 +2,12 @@ import logging
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 
+
 class Part:
     name = 'BasePart'
     level = 1
     logger = logging.getLogger("Part    ")
+
     def __init__(self):
         self.n_executions = 0
 
@@ -51,7 +53,6 @@ class PlotPart(Part):
         super(PlotPart, self).execute(result_tray, component)
         return result_tray
 
-
     def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1):
         self.logger.debug('\t{}: Setting up Axes!'.format(self.name))
 
@@ -67,14 +68,12 @@ class PlotPart(Part):
         else:
             self.is_bot = False
             bot_offset = self.small_offset
-        height = y1 - y0
-        width = x1 - x0
         self.gs = GridSpec(1, 1,
                            left=x0 + 0.1,
                            right=x1 - 0.1,
                            top=y1 - top_offset,
                            bottom=y0 + bot_offset)
-        self.ax = plt.subplot(self.gs[:,:])
+        self.ax = plt.subplot(self.gs[:, :])
         return self.ax
 
     def get_ax(self):
@@ -100,6 +99,7 @@ class Element:
     plot_components = []
     calc_components = []
     logger = logging.getLogger("Element ")
+
     def __init__(self):
         pass
 
@@ -114,6 +114,3 @@ class Element:
             return self.name == other.name
         elif isinstance(other, str):
             return self.name == other
-
-
-
