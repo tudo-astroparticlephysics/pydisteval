@@ -103,13 +103,47 @@ class CalcAggarwalHistoErrors(CalcPart):
             rel_std = np.empty((len(sum_w), len(self.alpha), 2))
             rel_std[:] = np.nan
 
-            lower, upper = calc_funcs.aggarwall_limits(mu,
-                                                       alpha=self.alpha)
+            lower, upper = calc_funcs.aggarwal_limits(mu,
+                                                      alpha=self.alpha)
             mask = mu > 0
             for i in range(len(self.alpha)):
                 rel_std[mask, i, 0] = lower[mask, i] / mu[mask]
                 rel_std[mask, i, 1] = upper[mask, i] / mu[mask]
             result_tray.add(rel_std, 'rel_std_aggarwal')
+        return result_tray
+
+
+class CalcAggarwalRatios(CalcPart):
+    name = 'CalcAggarwalRatios'
+    level = 3
+
+    def execute(self, result_tray, component):
+        result_tray = super(CalcAggarwalRatios, self).execute(result_tray,
+                                                              component)
+        binning = result_tray.binning
+        sum_w = result_tray.sum_w
+        mu = sum_w[:, result_tray.ref_idx]
+        if not hasattr(result_tray, 'ratios_aggarwal'):
+            ratios = np.zeros((len(binning) + 1, result_tray.n_components))
+        else:
+            ratios = result_tray.ratios_aggarwal
+        if component.c_type == 'ref':
+            if not hasattr(result_tray, 'rel_std_aggarwal'):
+                raise RuntimeError('No \'rel_std_aggarwal\' in the result tray'
+                                   '. run \'CalcAggarwalHistoErrors\' first!')
+            else:
+                rel_std = result_tray.rel_std_aggarwal
+            limits = calc_funcs.calc_p_alpha_limits(mu, rel_std)
+            ratios[:, component.idx] = 1.
+
+            limits
+
+            result_tray.add(limits, 'limits_aggarwal')
+        if component.c_type == 'test':
+            k = sum_w[:, component.idx]
+
+            ratios[:, component.idx] = calc_funcs.calc_p_alpha_ratio(mu, k)
+        result_tray.add(ratios, 'ratios_aggarwal')
         return result_tray
 
 
@@ -431,14 +465,17 @@ class PlotHistAggerwal(PlotPart):
             labels = [component.label]
             leg_objs = [line_obj]
         else:
+            rel_std = result_tray.rel_std_aggarwal[1:-1]
+            abs_std = np.zeros_like(rel_std)
+            for i in range(abs_std.shape[1]):
+                for j in range(abs_std.shape[2]):
+                    abs_std[:, i, j] = rel_std[:, i, j] * y_vals
             leg_objs = plot_funcs.plot_uncertainties(
                 ax=self.ax,
                 bin_edges=result_tray.binning,
-                y=y_vals,
-                uncert=result_tray.rel_std_aggarwal[1:-1],
+                uncert=abs_std,
                 color=component.color,
-                cmap=component.cmap,
-                alpha=result_tray.alpha)
+                cmap=component.cmap)
             labels = [component.label]
             for a_i in result_tray.alpha:
                 labels.append('      %.1f%% Uncert.' % (a_i * 100.))
@@ -459,6 +496,7 @@ class PlotHistAggerwal(PlotPart):
 class PlotRatioAggerwal(PlotPart):
     name = 'PlotRatioAggerwal'
     rows = 2
+    zoom = -5
 
     def __init__(self, zoomed):
         super(PlotRatioAggerwal, self).__init__()
@@ -488,7 +526,9 @@ class PlotRatioAggerwal(PlotPart):
                                bottom=y0 + bot_offset,
                                hspace=0.0)
             self.ax_upper = plt.subplot(self.gs[0, :])
+            self.ax_upper.set_ylim(-1, 1)
             self.ax = plt.subplot(self.gs[1, :])
+            self.ax.set_ylim(-1, 1)
             plt.setp(self.ax_upper.get_xticklabels(), visible=False)
         else:
             self.gs = GridSpec(1, 1,
@@ -497,6 +537,7 @@ class PlotRatioAggerwal(PlotPart):
                                top=y1 - top_offset,
                                bottom=y0 + bot_offset)
             self.ax = plt.subplot(self.gs[:, :])
+            self.ax.set_ylim(-1, 1)
         return self.ax
 
     def get_ax(self):
@@ -510,4 +551,113 @@ class PlotRatioAggerwal(PlotPart):
     def execute(self, result_tray, component):
         result_tray = super(PlotRatioAggerwal, self).execute(result_tray,
                                                              component)
+        if component.c_type == 'test':
+            self.__execute_test__(result_tray, component)
+        elif component.c_type == 'ref':
+            self.__execute_ref__(result_tray, component)
         return result_tray
+
+    def __execute_test__(self, result_tray, component):
+        binning = result_tray.binning
+        ratio = result_tray.ratios_aggarwal[1:-1, component.idx]
+        self.y_min_scaled = self.__plot_test_marker__(
+            fig=result_tray.fig,
+            ax=self.ax,
+            binning=binning,
+            ratio=ratio,
+            y_min=None,
+            facecolor=component.color,
+            edgecolor='k',
+            alpha=1.,
+            annotation='Ratio: Smallest Value')
+        if self.zoomed:
+            self.__plot_test_marker__(
+                fig=result_tray.fig,
+                ax=self.ax_upper,
+                binning=binning,
+                ratio=ratio,
+                y_min=self.zoom,
+                facecolor=component.color,
+                edgecolor='k',
+                alpha=1.,
+                annotation='Ratio: Intervals')
+
+    def __execute_ref__(self, result_tray, component):
+        binning = result_tray.binning
+        limits = result_tray.limits_aggarwal
+        self.__plot_ref_bands__(ax=self.ax,
+                                binning=binning,
+                                limits=limits,
+                                color=component.color,
+                                cmap=component.cmap,
+                                alphas=result_tray.alpha,
+                                y_min=self.y_min_scaled)
+        if self.zoomed:
+            self.__plot_ref_bands__(ax=self.ax_upper,
+                                    binning=binning,
+                                    limits=limits,
+                                    color=component.color,
+                                    cmap=component.cmap,
+                                    alphas=result_tray.alpha,
+                                    y_min=self.zoom)
+
+    def __plot_ref_bands__(self,
+                           ax,
+                           binning,
+                           limits,
+                           color,
+                           cmap,
+                           alphas,
+                           y_min):
+        mapped_uncerts, y_0, y_min = calc_funcs.map_aggarwal_ratio(
+            limits,
+            y_min=y_min,
+            y_0=1.)
+        plot_funcs.plot_line(ax=ax,
+                             bin_edges=binning,
+                             y=np.zeros(len(binning) - 1),
+                             color=color)
+        neg_inf_mask = np.isneginf(mapped_uncerts)
+        mapped_uncerts[neg_inf_mask] = -1.
+        plot_funcs.plot_uncertainties(ax=ax,
+                                      bin_edges=binning,
+                                      uncert=mapped_uncerts[1:-1],
+                                      color=color,
+                                      cmap=cmap)
+
+    def __plot_test_marker__(self,
+                             fig,
+                             ax,
+                             binning,
+                             ratio,
+                             y_min,
+                             facecolor,
+                             edgecolor,
+                             alpha,
+                             annotation):
+        mapped_uncerts, y_0, y_min = calc_funcs.map_aggarwal_ratio(
+            ratio,
+            y_min=y_min,
+            y_0=1.)
+        plot_funcs.plot_data_ratio_mapped(fig=fig,
+                                          ax=ax,
+                                          bin_edges=binning,
+                                          ratio=mapped_uncerts,
+                                          facecolor=facecolor,
+                                          edgecolor=edgecolor,
+                                          alpha=alpha)
+        M_t, M_p, m_t, m_p = plot_funcs.generate_ticks_for_aggarwal_ratio(
+            y_0, y_min)
+        ax.set_yticklabels(M_t)
+        ax.set_yticks(M_p)
+        ax.set_yticks(m_p, minor=True)
+        ax.set_ylabel('p-value*')
+        ax.text(binning[1],
+                0.90,
+                annotation,
+                horizontalalignment='left',
+                verticalalignment='top',
+                fontsize=12,
+                color='0.2',
+                alpha=0.5)
+        return y_min
