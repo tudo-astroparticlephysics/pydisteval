@@ -5,6 +5,7 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import ColorConverter
 from colorsys import rgb_to_hls, hls_to_rgb
 
+from .calc_funcs import map_aggarwal_ratio
 
 from . import legend_entries as le
 
@@ -28,7 +29,7 @@ def modify_color(color,
 def plot_inf_marker(fig,
                     ax,
                     binning,
-                    zero_mask,
+                    place_marker,
                     markeredgecolor='k',
                     markerfacecolor='none',
                     bot=True,
@@ -47,8 +48,8 @@ def plot_inf_marker(fig,
     bin_center = (binning[1:] + binning[:-1]) / 2
     binning_width = binning[-1] - binning[0]
     bin_0 = binning[0]
-    for bin_i, mask_i in zip(bin_center, zero_mask):
-        if not mask_i:
+    for bin_i, place in zip(bin_center, place_marker):
+        if place:
             x_i = ((bin_i - bin_0) / binning_width * width) + x_0
             patches.append(mpatches.RegularPolygon(
                 [x_i, y0],
@@ -65,6 +66,19 @@ def plot_inf_marker(fig,
     fig.patches.extend(patches)
 
 
+def plot_finite_marker(ax, x, y, facecolor, edgecolor, alpha):
+    ax.plot(x,
+            y,
+            ls='',
+            mew=1.,
+            marker='o',
+            markeredgecolor=edgecolor,
+            markerfacecolor=facecolor,
+            alpha=alpha,
+            ms='5',
+            zorder=MAIN_ZORDER + 1)
+
+
 def plot_data_style(fig,
                     ax,
                     bin_edges,
@@ -74,19 +88,18 @@ def plot_data_style(fig,
                     alpha,
                     ms='5'):
     zero_mask = y > 0
-    bin_center = (bin_edges[1:] + bin_edges[:-1]) / 2.
-    ax.plot(bin_center[zero_mask],
-            y[zero_mask],
-            ls='', ms=ms,
-            mew=1.,
-            marker='o',
-            markeredgecolor=edgecolor,
-            markerfacecolor=facecolor,
-            alpha=alpha,
-            zorder=MAIN_ZORDER + 1)
+    bin_mids = (bin_edges[1:] + bin_edges[:-1]) / 2.
+
+    plot_finite_marker(ax,
+                       x=bin_mids[zero_mask],
+                       y=y[zero_mask],
+                       facecolor=facecolor,
+                       edgecolor=edgecolor,
+                       alpha=alpha)
+
     plot_inf_marker(fig, ax,
                     bin_edges,
-                    zero_mask,
+                    ~zero_mask,
                     markerfacecolor=facecolor,
                     markeredgecolor=edgecolor,
                     alpha=alpha)
@@ -96,16 +109,16 @@ def plot_data_style(fig,
                          edgecolor)
 
 
-def plot_uncertainties(ax, bin_edges, y, uncert, color, cmap, alpha):
-    n_alpha = len(alpha)
+def plot_uncertainties(ax, bin_edges, uncert, color, cmap):
+    n_alpha = uncert.shape[1]
     cmap = plt.get_cmap(cmap)
-    colors = cmap(np.linspace(0.1, 0.9, len(alpha)))
+    colors = cmap(np.linspace(0.1, 0.9, n_alpha))
     legend_entries = []
     legend_entries.append(le.UncertObject(colors, color))
-    for i, (c, a) in enumerate(zip(colors[::-1], alpha[::-1])):
+    for i, c in enumerate(colors[::-1]):
         j = n_alpha - i - 1
-        lower_limit = uncert[:, j, 0] * y
-        upper_limit = uncert[:, j, 1] * y
+        lower_limit = uncert[:, j, 0]
+        upper_limit = uncert[:, j, 1]
         mask = np.isfinite(lower_limit)
         lower_limit[~mask] = 0.
         mask = np.isfinite(upper_limit)
@@ -119,7 +132,7 @@ def plot_uncertainties(ax, bin_edges, y, uncert, color, cmap, alpha):
                   borders=False,
                   brighten=False,
                   zorder=MAIN_ZORDER)
-    for i, (c, a) in enumerate(zip(colors, alpha)):
+    for i, c in enumerate(colors):
         legend_entries.append(le.UncertObject_single(c))
     return legend_entries
 
@@ -238,3 +251,105 @@ def plot_line(ax,
                    alpha=alpha,
                    zorder=zorder)
     return obj
+
+
+def plot_data_ratio_mapped(fig,
+                           ax,
+                           bin_edges,
+                           ratio,
+                           facecolor,
+                           edgecolor,
+                           alpha):
+    bin_mids = (bin_edges[1:] + bin_edges[:-1]) / 2.
+
+    finite_mask = np.isfinite(ratio)
+    neg_inf = np.isneginf(ratio)
+    pos_inf = np.isposinf(ratio)
+    oor_maker_pos = np.isclose(ratio, 1.1)
+    oor_maker_neg = np.isclose(ratio, -1.1)
+    finite_marker_mask = np.logical_and(
+        finite_mask,
+        ~np.logical_and(~oor_maker_neg, oor_maker_pos))
+
+    plot_finite_marker(ax,
+                       x=bin_mids[finite_marker_mask],
+                       y=ratio[finite_marker_mask],
+                       facecolor=edgecolor,
+                       edgecolor=facecolor,
+                       alpha=alpha)
+
+    plot_inf_marker(fig,
+                    ax,
+                    bin_edges,
+                    oor_maker_neg,
+                    markerfacecolor=facecolor,
+                    markeredgecolor=edgecolor,
+                    bot=True)
+    plot_inf_marker(fig,
+                    ax,
+                    bin_edges,
+                    oor_maker_pos,
+                    markerfacecolor=facecolor,
+                    markeredgecolor=edgecolor,
+                    bot=False)
+    plot_inf_marker(fig,
+                    ax,
+                    bin_edges,
+                    neg_inf,
+                    markerfacecolor=facecolor,
+                    markeredgecolor=edgecolor,
+                    bot=False,
+                    alpha=0.5)
+    plot_inf_marker(fig,
+                    ax,
+                    bin_edges,
+                    pos_inf,
+                    markerfacecolor=facecolor,
+                    markeredgecolor=edgecolor,
+                    bot=True,
+                    alpha=0.5)
+
+
+def generate_ticks_for_aggarwal_ratio(y_0, y_min, max_ticks_per_side=5):
+    y_min = np.floor(y_min)
+    y_0_log = np.log10(y_0)
+
+    tick_pos = []
+
+    n_ticks = 1
+    tick_pos.append(y_0_log)
+    if y_0_log != np.floor(y_0_log):
+        tick_pos.append(np.floor(y_0_log))
+        n_ticks += 2
+    while tick_pos[-1] > y_min:
+        tick_pos.append(tick_pos[-1] - 1)
+        n_ticks += 2
+    n_ticks_per_side = (n_ticks - 1) / 2
+    mayor_step_size = np.ceil(n_ticks_per_side / max_ticks_per_side)
+    tick_pos_mapped, _, _ = map_aggarwal_ratio(np.power(10, tick_pos),
+                                               y_min=y_min,
+                                               y_0=y_0)
+    mayor_ticks = []
+    mayor_ticks_labels = []
+
+    minor_ticks = []
+    minor_ticks_labels = []
+    mayor_tick_counter = 0
+    for i, [p, l] in enumerate(zip(tick_pos_mapped, tick_pos)):
+        lab = 10**l
+        lab = u'10$^{\mathregular{%d}}$' % l
+        if i == 0:
+            mayor_ticks_labels.append(lab)
+            mayor_ticks.append(0)
+        else:
+            if mayor_tick_counter == mayor_step_size:
+                mayor_ticks.extend([p * -1, p])
+                mayor_ticks_labels.extend([lab, lab])
+                mayor_tick_counter = 0
+            else:
+                minor_ticks.extend([p * -1, p])
+                minor_ticks_labels.extend([lab, lab])
+                mayor_tick_counter += 1
+    return mayor_ticks_labels, mayor_ticks, minor_ticks_labels, minor_ticks
+
+

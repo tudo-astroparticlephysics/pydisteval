@@ -52,6 +52,7 @@ class AggarwalRatio(Element):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcAggarwalHistoErrors(alpha))
+        self.calc_components.append(parts.CalcAggarwalRatios())
         self.plot_components.append(parts.PlotRatioAggerwal(zoomed=zoomed))
 
 

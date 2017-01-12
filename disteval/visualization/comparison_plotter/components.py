@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 
 
-ORDER = ['ref', 'test', 'ref_part', 'test_part']
+ORDER = ['test', 'ref', 'ref_part', 'test_part']
 COLOR_CYCLE = [(31, 119, 180),
                (255, 127, 14),
                (44, 160, 44),
