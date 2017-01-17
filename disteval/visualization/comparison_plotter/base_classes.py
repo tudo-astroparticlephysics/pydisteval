@@ -25,6 +25,7 @@ class Part:
 
     def finish(self, result_tray=None):
         self.logger.debug('\t{}: Finishing!'.format(self.name))
+        self.n_executions = 0
         return result_tray
 
     def __lt__(self, other):

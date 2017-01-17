@@ -491,6 +491,8 @@ class PlotHistAggerwal(PlotPart):
                        handler_map=le.handler_mapper,
                        loc='best',
                        prop={'size': 11})
+        self.leg_labels = []
+        self.leg_entries = []
 
 
 class PlotRatioAggerwal(PlotPart):
