@@ -13,13 +13,19 @@ class CalcBinning(CalcPart):
     name = 'CalcBinning'
     level = 0
 
-    def __init__(self, n_bins=50, check_all=True):
+    def __init__(self, n_bins=50, bining_dict=None, check_all=True):
         super(CalcBinning, self).__init__()
         self.n_bins = n_bins
         self.check_all = check_all
+        self.binning_dict=None
 
     def execute(self, result_tray, component):
         result_tray = super(CalcBinning, self).execute(result_tray, component)
+        if self.binning_dict is not None:
+            if not isinstance(self.binning_dict, dict)
+                raise TypeError('\'binning_dict\' must be of type dict!')
+            if result_tray.x_label in self.binning_dict.keys():
+                return self.binning_dict[result_tray.x_label]
         if not hasattr(result_tray, 'binning'):
             min_x = np.min(component.X)
             max_x = np.max(component.X)
