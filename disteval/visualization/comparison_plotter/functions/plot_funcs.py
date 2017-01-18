@@ -274,8 +274,8 @@ def plot_data_ratio_mapped(fig,
     plot_finite_marker(ax,
                        x=bin_mids[finite_marker_mask],
                        y=ratio[finite_marker_mask],
-                       facecolor=edgecolor,
-                       edgecolor=facecolor,
+                       facecolor=facecolor,
+                       edgecolor=edgecolor,
                        alpha=alpha)
 
     plot_inf_marker(fig,

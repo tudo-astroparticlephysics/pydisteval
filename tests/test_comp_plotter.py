@@ -18,7 +18,7 @@ plotter.add_element('Normalization', normalize='test_livetime')
 
 
 
-for i in range(10):
+for i in range(1):
     X_ref = np.random.normal(loc=0., size=100000)
     X_test = np.random.normal(loc=0, size=1000)
     plotter.add_ref('Sum MC', X_ref, livetime=100, color='k')

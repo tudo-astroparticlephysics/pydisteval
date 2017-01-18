@@ -12,7 +12,8 @@ class AggarwalHisto(Element):
                  bands=False,
                  band_borders=True,
                  band_brighten=True,
-                 band_alpha=0.5):
+                 band_alpha=0.5,
+                 y_label='Frequence'):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcAggarwalHistoErrors(alpha))
@@ -20,7 +21,8 @@ class AggarwalHisto(Element):
                                            bands=bands,
                                            band_borders=band_borders,
                                            band_brighten=band_brighten,
-                                           band_alpha=band_alpha)
+                                           band_alpha=band_alpha,
+                                           y_label=y_label)
         self.plot_components.append(plot_hist)
 
 
@@ -33,7 +35,8 @@ class ClassicHisto(Element):
                  bands=False,
                  band_borders=True,
                  band_brighten=True,
-                 band_alpha=0.5):
+                 band_alpha=0.5,
+                 y_label='Frequence'):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcClassicHistoErrors())
@@ -41,19 +44,25 @@ class ClassicHisto(Element):
                                           bands=bands,
                                           band_borders=band_borders,
                                           band_brighten=band_brighten,
-                                          band_alpha=band_alpha)
+                                          band_alpha=band_alpha,
+                                          y_label=y_label)
         self.plot_components.append(plot_hist)
 
 
 class AggarwalRatio(Element):
     name = 'AggarwalRatio'
 
-    def __init__(self, n_bins=50, alpha=[0.68, 0.9, 0.95], zoomed=True):
+    def __init__(self,
+                 n_bins=50,
+                 alpha=[0.68, 0.9, 0.95],
+                 zoomed=True,
+                 y_label='p-value*'):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcAggarwalHistoErrors(alpha))
         self.calc_components.append(parts.CalcAggarwalRatios())
-        self.plot_components.append(parts.PlotRatioAggerwal(zoomed=zoomed))
+        self.plot_components.append(parts.PlotRatioAggerwal(zoomed=zoomed,
+                                                            y_label=y_label))
 
 
 class ClassicRatio(Element):
