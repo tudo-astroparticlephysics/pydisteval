@@ -207,7 +207,8 @@ class PlotHistClassic(PlotPart):
                  bands,
                  band_borders,
                  band_brighten,
-                 band_alpha):
+                 band_alpha,
+                 y_label):
         super(PlotHistClassic, self).__init__()
         self.log_y = log_y
         self.bands = bands
@@ -217,12 +218,13 @@ class PlotHistClassic(PlotPart):
         self.leg_labels = []
         self.leg_entries = []
         self.y_lower = None
+        self.y_label = y_label
 
     def start(self, result_tray):
         result_tray = super(PlotHistClassic, self).start(result_tray)
         if self.log_y:
             self.ax.set_yscale('log', clip=True)
-        self.ax.set_ylabel('Frequence')
+        self.ax.set_ylabel(self.y_label)
         return result_tray
 
     def execute(self, result_tray, component):
@@ -388,19 +390,21 @@ class PlotHistAggerwal(PlotPart):
                  bands,
                  band_borders,
                  band_brighten,
-                 band_alpha):
+                 band_alpha,
+                 y_label):
         super(PlotHistAggerwal, self).__init__()
         self.log_y = log_y
         self.bands = bands
         self.y_lower = None
         self.leg_labels = []
         self.leg_entries = []
+        self.y_label = y_label
 
     def start(self, result_tray):
         result_tray = super(PlotHistAggerwal, self).start(result_tray)
         if self.log_y:
             self.ax.set_yscale('log', clip=True)
-        self.ax.set_ylabel('Frequence')
+        self.ax.set_ylabel(self.y_label)
         return result_tray
 
     def execute(self, result_tray, component):
@@ -500,9 +504,10 @@ class PlotRatioAggerwal(PlotPart):
     rows = 2
     zoom = -5
 
-    def __init__(self, zoomed):
+    def __init__(self, zoomed, y_label):
         super(PlotRatioAggerwal, self).__init__()
         self.zoomed = zoomed
+        self.y_label = y_label
         if zoomed:
             self.rows = 3
 
@@ -653,13 +658,14 @@ class PlotRatioAggerwal(PlotPart):
         ax.set_yticklabels(M_t)
         ax.set_yticks(M_p)
         ax.set_yticks(m_p, minor=True)
-        ax.set_ylabel('p-value*')
+        ax.set_ylabel(self.y_label)
+        ax.yaxis.grid(True)
         ax.text(binning[1],
                 0.90,
                 annotation,
                 horizontalalignment='left',
                 verticalalignment='top',
                 fontsize=12,
-                color='0.2',
-                alpha=0.5)
+                color='0.4',
+                alpha=0.7)
         return y_min

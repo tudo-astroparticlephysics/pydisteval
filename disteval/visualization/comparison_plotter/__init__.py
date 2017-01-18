@@ -143,7 +143,6 @@ class ComparisonPlotter:
             ax_dict[part_i.name] = part_i.get_ax()
             part_i.finish(result_tray)
         logger.debug('Finished!')
-        self.fig.savefig('test.png')
         return self.fig, ax_dict, result_tray
 
     def calc(self):
