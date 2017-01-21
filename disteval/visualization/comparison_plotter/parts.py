@@ -17,12 +17,12 @@ class CalcBinning(CalcPart):
         super(CalcBinning, self).__init__()
         self.n_bins = n_bins
         self.check_all = check_all
-        self.binning_dict=None
+        self.binning_dict = None
 
     def execute(self, result_tray, component):
         result_tray = super(CalcBinning, self).execute(result_tray, component)
         if self.binning_dict is not None:
-            if not isinstance(self.binning_dict, dict)
+            if not isinstance(self.binning_dict, dict):
                 raise TypeError('\'binning_dict\' must be of type dict!')
             if result_tray.x_label in self.binning_dict.keys():
                 return self.binning_dict[result_tray.x_label]
@@ -249,14 +249,14 @@ class PlotHistClassic(PlotPart):
                                            bin_edges=binning,
                                            y=y_vals,
                                            color=color)
-            _ = plot_funcs.plot_band(ax=self.ax,
-                                     bin_edges=binning,
-                                     y_err_low=y_low,
-                                     y_err_high=y_high,
-                                     color=color,
-                                     alpha=1.0,
-                                     borders=False,
-                                     brighten=False)
+            plot_funcs.plot_band(ax=self.ax,
+                                 bin_edges=binning,
+                                 y_err_low=y_low,
+                                 y_err_high=y_high,
+                                 color=color,
+                                 alpha=1.0,
+                                 borders=False,
+                                 brighten=False)
         else:
             leg_obj = plot_funcs.plot_hist(ax=self.ax,
                                            bin_edges=binning,
