@@ -49,6 +49,7 @@ setup(
         'tables',
         'h5py',
         'scipy'],
+
     entry_points={
         'console_scripts': ['fact_example=examples.fact_example.py:main'],
     },

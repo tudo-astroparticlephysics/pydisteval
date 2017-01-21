@@ -106,9 +106,9 @@ class Element:
 
     def register(self, comparator):
         for calc_comp_i in Element.calc_components:
-            comparator.register_calc_part(calc_comp_i)
+            comparator._register_calc_part(calc_comp_i)
         for plot_comp_i in Element.plot_components:
-            comparator.register_plot_part(plot_comp_i)
+            comparator._register_plot_part(plot_comp_i)
 
     def __eq__(self, other):
         if isinstance(other, Part):
