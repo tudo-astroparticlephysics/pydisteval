@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib.ticker import MaxNLocator
 from matplotlib import pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.colors import ColorConverter

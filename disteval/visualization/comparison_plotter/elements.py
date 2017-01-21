@@ -63,7 +63,7 @@ class AggarwalHisto(Element):
                  bands=False,
                  band_borders=True,
                  band_brighten=True,
-                 band_alpha=0.5,,
+                 band_alpha=0.5,
                  binning_dict=None):
         self.calc_components.append(parts.CalcBinning(
             n_bins=n_bins,
