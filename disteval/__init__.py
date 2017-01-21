@@ -3,16 +3,12 @@
 from logging import getLogger
 
 import numpy as np
-from tqdm import tqdm
-
 
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import roc_curve, auc
 
 from .scripts.classifier_characteristics import ClassifierCharacteristics
 from .scripts.recursive_selection_parallel import get_all_auc_scores
 
-from .scripts.preparation import prepare_data
 
 logger = getLogger('disteval')
 
@@ -20,11 +16,11 @@ __author__ = "Mathis Börner and Jens Buß"
 
 
 def cv_test_ref_classification(clf,
-                 X,
-                 y,
-                 sample_weight=None,
-                 cv_steps=10,
-                 return_all_models=False):
+                               X,
+                               y,
+                               sample_weight=None,
+                               cv_steps=10,
+                               return_all_models=False):
     """Runs a classification betwenn the test data and the reference data.
     This classification is run in a cross-validation with a provided
     classifier. The classifier needs a fit function to start the model
@@ -89,18 +85,15 @@ def cv_test_ref_classification(clf,
         cv_step = np.zeros_like(y, dtype=int)
         if return_all_models:
             from copy import deepcopy
-            trained_clfs= []
+            trained_clfs = []
         for i, [train_idx, test_idx] in enumerate(cv_iterator):
             X_train = X[train_idx]
             X_test = X[test_idx]
             y_train = y[train_idx]
-            y_test = y[test_idx]
             if sample_weight is None:
                 sample_weight_train = None
-                sample_weight_test = None
             else:
                 sample_weight_train = sample_weight[train_idx]
-                sample_weight_test = sample_weight[test_idx]
             clf = clf.fit(X=X_train,
                           y=y_train,
                           sample_weight=sample_weight_train)
@@ -202,8 +195,8 @@ def recursive_feature_selection_roc_auc(clf,
         'Classifier sanity check failed!'
 
     if n_features > X.shape[1]:
-        log.info(' \'n_features\' higher than total number of features.'
-                 ' \'n_features\' reduced!')
+        logger.info(' \'n_features\' higher than total number of features.'
+                    ' \'n_features\' reduced!')
         n_features = X.shape[1]
     auc_scores = np.zeros((X.shape[1], n_features))
     selected_features = []
@@ -227,11 +220,11 @@ def recursive_feature_selection_roc_auc(clf,
                 index_best = idx
             if matching_features:
                 if forward:
-                    if np.abs(auc-0.5) < np.abs(value_best-0.5):
+                    if np.abs(auc - 0.5) < np.abs(value_best - 0.5):
                         value_best = auc
                         index_best = idx
                 else:
-                    if np.abs(auc-0.5) > np.abs(value_best-0.5):
+                    if np.abs(auc - 0.5) > np.abs(value_best - 0.5):
                         value_best = auc
                         index_best = idx
             else:
@@ -246,10 +239,3 @@ def recursive_feature_selection_roc_auc(clf,
         auc_scores[:, len(selected_features)] = auc_scores_i
         selected_features.append(index_best)
     return selected_features, auc_scores
-
-
-
-
-
-
-

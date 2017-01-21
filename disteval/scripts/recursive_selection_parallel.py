@@ -4,9 +4,8 @@ from concurrent.futures import ProcessPoolExecutor, wait
 
 import numpy as np
 
-
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import StratifiedKFold
 
 
 def __single_auc_score__(feature_i,
@@ -117,8 +116,8 @@ def get_all_auc_scores(clf,
     if cv_steps < 2:
         raise ValueError('\'cv_steps\' must be 2 or higher')
     else:
-        cv_iterator = strat_kfold.split(X, y)
-        cv_indices = [[train, test] for train, test in cv_iterator]
+        cv_iterator = StratifiedKFold.split(n_splits=cv_steps)
+        cv_indices = [[train, test] for train, test in cv_iterator.split(X, y)]
     test_features = np.array([int(i) for i in range(X.shape[1])
                               if i not in selected_features], dtype=int)
 
@@ -167,10 +166,10 @@ def get_all_auc_scores(clf,
         auc_scores = []
         for feature_i, test_set in test_sets.items():
             _, auc = __single_auc_score__(feature_i=feature_i,
-                                                  clf=clf,
-                                                  cv_indices=cv_indices,
-                                                  X=X[:, test_set],
-                                                  y=y,
-                                                  sample_weight=sample_weight)
+                                          clf=clf,
+                                          cv_indices=cv_indices,
+                                          X=X[:, test_set],
+                                          y=y,
+                                          sample_weight=sample_weight)
             auc_scores[feature_i] = auc
     return auc_scores
