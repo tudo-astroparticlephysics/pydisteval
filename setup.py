@@ -47,7 +47,7 @@ setup(
         'matplotlib>=1.4',
         'scikit-learn>=0.18.1',
         'tables',
-        'tqdm',
+        'h5py',
         'scipy'],
     entry_points={
         'console_scripts': ['fact_example=examples.fact_example.py:main'],
