@@ -52,6 +52,8 @@ setup(
     entry_points={
         'console_scripts': ['fact_example=examples.fact_example.py:main'],
     },
+    docs_require=['sphinxcontrib-napoleon',
+                  'sphinx_rtd_theme'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
 )
