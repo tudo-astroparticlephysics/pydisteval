@@ -25,7 +25,9 @@ class CalcBinning(CalcPart):
             if not isinstance(self.binning_dict, dict):
                 raise TypeError('\'binning_dict\' must be of type dict!')
             if result_tray.x_label in self.binning_dict.keys():
-                return self.binning_dict[result_tray.x_label]
+                binning = self.binning_dict[result_tray.x_label]
+                result_tray.add(binning, 'binning')
+                return result_tray
         if not hasattr(result_tray, 'binning'):
             min_x = np.min(component.X)
             max_x = np.max(component.X)

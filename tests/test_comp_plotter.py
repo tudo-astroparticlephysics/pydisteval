@@ -12,11 +12,10 @@ logging.basicConfig(
 plotter = ComparisonPlotter()
 
 
-plotter.add_element('AggarwalHisto')
+plotter.add_element('AggarwalHisto',
+                    binning_dict={'x': np.linspace(0., 1., 10)})
 plotter.add_element('AggarwalRatio')
 plotter.add_element('Normalization', normalize='test_livetime')
-
-
 
 for i in range(1):
     X_ref = np.random.normal(loc=0., size=100000)
@@ -26,6 +25,6 @@ for i in range(1):
     plotter.add_ref_part('Corsika', X_ref[3000:4000], livetime=100)
     plotter.add_test('Data', X_test, livetime=1)
 
-    fig, ax_dict, _ = plotter.draw()
+    fig, ax_dict, _ = plotter.draw('x')
     fig.savefig('test{}.png'.format(i))
     plotter.finish()
