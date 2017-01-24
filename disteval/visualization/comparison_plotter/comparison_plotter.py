@@ -388,3 +388,12 @@ class ComparisonPlotter:
         self._components = []
         get_cmap_name.pointer = -1
         get_color.pointer = -1
+
+    def reset(self, title=''):
+        self.title = title
+        self._plot_parts = []
+        self._calc_parts = []
+        self._components = []
+        self._ref_idx = None
+        self._test_idx = None
+        self._fig = None
