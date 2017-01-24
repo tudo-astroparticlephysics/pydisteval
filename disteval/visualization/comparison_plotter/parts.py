@@ -13,11 +13,11 @@ class CalcBinning(CalcPart):
     name = 'CalcBinning'
     level = 0
 
-    def __init__(self, n_bins=50, bining_dict=None, check_all=True):
+    def __init__(self, n_bins=50, binning_dict=None, check_all=True):
         super(CalcBinning, self).__init__()
         self.n_bins = n_bins
         self.check_all = check_all
-        self.binning_dict = None
+        self.binning_dict = binning_dict
 
     def execute(self, result_tray, component):
         result_tray = super(CalcBinning, self).execute(result_tray, component)
