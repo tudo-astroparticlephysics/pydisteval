@@ -321,8 +321,9 @@ class ComparisonPlotter:
         """
         logger.debug('Start Draw Process!')
         logger.debug('===================')
-        result_tray = self._calc()
+        result_tray = ResultTray()
         result_tray.add(x_label, 'x_label')
+        result_tray = self._calc(result_tray)
         if not isinstance(fig, plt.Figure):
             self._fig = plt.figure(figsize=figsize)
         result_tray.add(self._fig, 'fig')
@@ -351,9 +352,8 @@ class ComparisonPlotter:
         logger.debug('Finished!')
         return self._fig, ax_dict, result_tray
 
-    def _calc(self):
+    def _calc(self, result_tray):
         logger.debug('Starting Calculating...')
-        result_tray = ResultTray()
         n_components = len(self._components)
         self._calc_parts = sorted(self._calc_parts)
         self._components = sorted(self._components)
