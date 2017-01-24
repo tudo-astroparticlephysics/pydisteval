@@ -104,7 +104,7 @@ class ComparisonPlotter:
             Keyword arguments of the element. See element documentatioin.
 
         """
-        if issubclass(Element):
+        if isinstance(element, Element):
             element = element(**kwargs)
         elif isinstance(element, str):
             element_class = REGISTERED_ELEMENTS[element.lower()]
