@@ -1,4 +1,5 @@
 from matplotlib import pyplot as plt
+from matplotlib.colors import Colormap
 
 
 ORDER = ['test', 'ref', 'ref_part', 'test_part']
@@ -45,10 +46,10 @@ class ColorPalette:
         return cmap
 
     def get_color(self):
-        if self.color_pointer >= len(self.cmap_cycle):
+        if self.color_pointer >= len(self.color_cycle):
             self.color_pointer = 0
         else:
-            cmap = self.cmap_cycle[self.color_pointer]
+            cmap = self.color_cycle[self.color_pointer]
             self.color_pointer += 1
         return cmap
 
@@ -71,10 +72,13 @@ class Component:
         self.color = color
         if c_type not in ['ref', 'test']:
             self.cmap = None
-        elif cmap is not None:
+        elif isinstance(cmap, str):
+            self.cmap = plt.get_cmap(cmap)
+        elif isinstance(cmap, Colormap):
             self.cmap = cmap
         else:
-            self.cmap = cmap
+            raise ValueError('cmap must be a colormap from matplotlib or '
+                             'an instance of type matplotlib.colors.ColorMap')
 
     def __lt__(self, other):
         return ORDER.index(self.c_type) < ORDER.index(other.c_type)
