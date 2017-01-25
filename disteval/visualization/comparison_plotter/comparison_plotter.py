@@ -312,22 +312,25 @@ class ComparisonPlotter:
         ----------
         x_label : str, optional
             Label of the x-axis.
-        X : array_like
-            Datapoints.
-        livetime : float, optional
-            Livetime is the time in which the data is taken/produced.
-            This is used to be able to proper normalize components of
-            different livetime on each other. For this purpose only
-            the relative difference between the livetimes is needed.
-            So if you have datasets with the same livetime just set
-            them all to 1 respectivly use the default.
-        weights : array_like
-            Array of weights. Must be of the same length like X.
-        color : matplotlib compatible color code, optional
-            A specific color you want this component to have. If None
-            a color from the color cycle defined in 'components' module
-            is used.
+        fig : matplotlib.Figure, optional
+            Figure instance that should be used to draw on. If no instance
+            is provided a new figure of 'figsize' is created.
+        figsize : (width, height), optional
+            Tuple of width and height of the figure that is created.
 
+        Returns
+        -------
+        fig : matplotlib.Figure
+            The figure to which the plot is added
+        ax_dict : dict
+            Dictionary with all the axes created by the PlotParts.
+            The key is the name of the PlotPart. If a PlotPart creates
+            more than one axis (e.g. AggarwalRatio) a list with all
+            axes is added to the dict under the name of the part.
+
+        result_tray : comparison_plotter.base_classes.ResultTray
+            A simple object with all the results of the CalcParts as
+            the attribute.
         """
         logger.debug('Start Draw Process!')
         logger.debug('===================')
@@ -394,6 +397,11 @@ class ComparisonPlotter:
         return result_tray
 
     def finish(self):
+        """Method that should be called after drawing.
+
+        It resets the color cycle, removes the components and closes
+        the figure. The all added elements are kept.
+        """
         logger.debug('Finishing: resetting color cycle, component and figure!')
         if self._fig is not None:
             plt.close(self._fig)
@@ -404,6 +412,16 @@ class ComparisonPlotter:
         self.color_palette.reset()
 
     def reset(self, title=''):
+        """Method that can be used to do a full reset of the plotter.
+
+        Additional to ComparisonPlotter.finish() also all elements are
+        removed. If no title is provided to reset, also the title is emptied.
+
+        Parameters
+        ----------
+        title : str, optional
+            Title of the plot.
+        """
         logger.debug('Reset: resetting parts and components!')
         self.finish()
         self.title = title
