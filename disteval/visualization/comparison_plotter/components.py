@@ -20,24 +20,41 @@ CMAP_CYCLE = ['viridis_r',
               'inferno_r']
 
 
-def get_cmap_name():
-    get_cmap_name.pointer += 1
-    if get_cmap_name.pointer >= len(CMAP_CYCLE):
-        get_cmap_name.pointer = 0
-    return CMAP_CYCLE[get_cmap_name.pointer]
+class ColorPalette:
+    def __init__(self, color_cycle=None, cmap_cycle=None):
+        if color_cycle is None:
+            self.color_cycle = COLOR_CYCLE
+        elif isinstance(color_cycle, list) or \
+                isinstance(color_cycle, tuple):
+            self.color_cycle = color_cycle
+        self.color_pointer = 0
 
+        if cmap_cycle is None:
+            self.cmap_cycle = CMAP_CYCLE
+        elif isinstance(cmap_cycle, list) or \
+                isinstance(cmap_cycle, tuple):
+            self.cmap_cycle = cmap_cycle
+        self.cmap_pointer = 0
 
-get_cmap_name.pointer = -1
+    def get_cmap(self):
+        if self.cmap_pointer >= len(self.cmap_cycle):
+            self.cmap_pointer = 0
+        else:
+            cmap = self.cmap_cycle[self.cmap_pointer]
+            self.cmap_pointer += 1
+        return cmap
 
+    def get_color(self):
+        if self.color_pointer >= len(self.cmap_cycle):
+            self.color_pointer = 0
+        else:
+            cmap = self.cmap_cycle[self.color_pointer]
+            self.color_pointer += 1
+        return cmap
 
-def get_color():
-    get_color.pointer += 1
-    if get_color.pointer >= len(COLOR_CYCLE):
-        get_color.pointer = 0
-    return COLOR_CYCLE[get_color.pointer]
-
-
-get_color.pointer = -1
+    def reset(self):
+        self.color_pointer = 0
+        self.cmap_pointer = 0
 
 
 class Component:
@@ -51,13 +68,11 @@ class Component:
         self.X = X
         self.livetime = livetime
         self.weights = weights
-        if color is None:
-            color = get_color()
         self.color = color
-        if cmap is None and c_type == 'ref':
-            self.cmap = plt.get_cmap(get_cmap_name())
-        elif c_type != 'ref':
+        if c_type not in ['ref', 'test']:
             self.cmap = None
+        elif cmap is not None:
+            self.cmap = cmap
         else:
             self.cmap = cmap
 

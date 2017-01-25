@@ -11,7 +11,7 @@ import logging
 from matplotlib import pyplot as plt
 
 from . import elements
-from .components import Component, get_color, get_cmap_name
+from .components import Component, ColorPalette
 from .base_classes import ResultTray, Element
 
 REGISTERED_ELEMENTS = {'aggarwalhisto': elements.AggarwalHisto,
@@ -82,6 +82,7 @@ class ComparisonPlotter:
         self._ref_idx = None
         self._test_idx = None
         self._fig = None
+        self.color_palette = ColorPalette()
 
     def add_element(self, element, **kwargs):
         """Method to add a Element.
@@ -162,6 +163,11 @@ class ComparisonPlotter:
         """
         idx = len(self._components)
         self._ref_idx = idx
+        if color is None:
+            color = self.color_palette.get_color()
+        if cmap is None:
+            cmap = self.color_palette.get_cmap()
+
         logger.debug('Added \'{}\' (Ref-Component)!'.format(label))
         self._components.append(Component(idx=idx,
                                           label=label,
@@ -245,6 +251,10 @@ class ComparisonPlotter:
 
         """
         logger.debug('Added \'{}\' (Test-Component)!'.format(label))
+        if color is None:
+            color = self.color_palette.get_color()
+        if cmap is None:
+            cmap = self.color_palette.get_cmap()
         self._components.append(Component(idx=len(self._components),
                                           label=label,
                                           c_type='test',
@@ -384,16 +394,18 @@ class ComparisonPlotter:
         return result_tray
 
     def finish(self):
-        plt.close(self._fig)
-        self._components = []
-        get_cmap_name.pointer = -1
-        get_color.pointer = -1
-
-    def reset(self, title=''):
-        self.title = title
-        self._plot_parts = []
-        self._calc_parts = []
+        logger.debug('Finishing: resetting color cycle, component and figure!')
+        if self._fig is not None:
+            plt.close(self._fig)
+            self._fig = None
         self._components = []
         self._ref_idx = None
         self._test_idx = None
-        self._fig = None
+        self.color_palette.reset()
+
+    def reset(self, title=''):
+        logger.debug('Reset: resetting parts and components!')
+        self.finish()
+        self.title = title
+        self._plot_parts = []
+        self._calc_parts = []
