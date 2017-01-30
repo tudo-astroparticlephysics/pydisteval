@@ -128,30 +128,61 @@ class CalcAggarwalRatios(CalcPart):
     def execute(self, result_tray, component):
         result_tray = super(CalcAggarwalRatios, self).execute(result_tray,
                                                               component)
-        binning = result_tray.binning
         sum_w = result_tray.sum_w
         mu = sum_w[:, result_tray.ref_idx]
-        if not hasattr(result_tray, 'ratios_aggarwal'):
-            ratios = np.zeros((len(binning) + 1, result_tray.n_components))
-        else:
-            ratios = result_tray.ratios_aggarwal
         if component.c_type == 'ref':
             if not hasattr(result_tray, 'rel_std_aggarwal'):
                 raise RuntimeError('No \'rel_std_aggarwal\' in the result tray'
                                    '. run \'CalcAggarwalHistoErrors\' first!')
             else:
                 rel_std = result_tray.rel_std_aggarwal
-            limits = calc_funcs.calc_p_alpha_limits(mu, rel_std)
-            ratios[:, component.idx] = 1.
+            y_mins_limit = [0, 0]
+            limits = np.zeros_like(rel_std)
+            limits[:, :, 0] = calc_funcs.calc_p_alpha_limits(
+                mu=mu,
+                rel_std=rel_std[:, :, 0],
+                upper=False)
+            limits[:, :, 1] = calc_funcs.calc_p_alpha_limits(
+                mu=mu,
+                rel_std=rel_std[:, :, 1],
+                upper=True)
+            limits_mapped = np.zeros_like(limits)
+            limits_mapped[:, :, 0], y_min, y_0 = calc_funcs.map_aggarwal_ratio(
+                limits[:, :, 0],
+                y_min=None,
+                y_0=1.,
+                upper=False)
+            y_mins_limit[0] = y_min
 
-            limits
+            limits_mapped[:, :, 1], y_min, y_0 = calc_funcs.map_aggarwal_ratio(
+                limits[:, :, 1],
+                y_min=None,
+                y_0=1.,
+                upper=True)
+            y_mins_limit[1] = y_min
 
-            result_tray.add(limits, 'limits_aggarwal')
+            result_tray.add(y_mins_limit, 'y_mins_limit')
+            result_tray.add(limits_mapped, 'limits_mapped')
         if component.c_type == 'test':
             k = sum_w[:, component.idx]
+            ratio = calc_funcs.calc_p_alpha_ratio(mu, k)
+            upper = k > mu
+            below = ~upper
+            ratio_mapped = np
+            ratio_mapped[below], y_below = calc_funcs.map_aggarwal_ratio(
+                ratio[below],
+                y_min=None,
+                y_0=1.,
+                upper=False)
+            ratio_mapped[upper], y_upper = calc_funcs.map_aggarwal_ratio(
+                ratio[upper],
+                y_min=None,
+                y_0=1.,
+                upper=True)
 
-            ratios[:, component.idx] = calc_funcs.calc_p_alpha_ratio(mu, k)
-        result_tray.add(ratios, 'ratios_aggarwal')
+            result_tray.add([y_below, y_upper], 'y_mins_ratio')
+            result_tray.add(ratio_mapped, 'ratio_mapped')
+            result_tray.add(upper, 'is_above')
         return result_tray
 
 
@@ -519,6 +550,11 @@ class PlotRatioAggerwal(PlotPart):
         if zoomed:
             self.rows = 3
 
+    def start(self, result_tray):
+        y_min_limit = np.min(result_tray.y_mins_limit)
+        y_min_ratio = np.min(result_tray.y_mins_ratio)
+        self.y_min = min(y_min_limit, y_min_ratio)
+
     def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1):
         self.logger.debug('\t{}: Setting up Axes!'.format(self.name))
         if idx == 0:
@@ -573,8 +609,15 @@ class PlotRatioAggerwal(PlotPart):
         return result_tray
 
     def __execute_test__(self, result_tray, component):
+        y_mins_limit = result_tray.y_mins_limit
+        ratio_mapped = result_tray.ratio_mapped[1:-1]
+        is_above = result_tray.is_above[1:-1]
         binning = result_tray.binning
-        ratio = result_tray.ratios_aggarwal[1:-1, component.idx]
+        factor_above = y_mins_limit[1] / self.y_min
+        factor_below = y_mins_limit[0] / self.y_min
+        ratio_mapped[is_above] *= y_mins_limit[is_above] * factor_above
+        ratio_mapped[~is_above] *= y_mins_limit[~is_above] * factor_below
+
         self.y_min_scaled = self.__plot_test_marker__(
             fig=result_tray.fig,
             ax=self.ax,
