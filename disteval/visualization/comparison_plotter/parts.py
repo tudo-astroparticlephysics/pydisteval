@@ -138,25 +138,19 @@ class CalcAggarwalRatios(CalcPart):
                 rel_std = result_tray.rel_std_aggarwal
             y_mins_limit = [0, 0]
             limits = np.zeros_like(rel_std)
-            limits[:, :, 0] = calc_funcs.calc_p_alpha_limits(
+            limits = calc_funcs.calc_p_alpha_limits(
                 mu=mu,
-                rel_std=rel_std[:, :, 0],
-                upper=False)
-            limits[:, :, 1] = calc_funcs.calc_p_alpha_limits(
-                mu=mu,
-                rel_std=rel_std[:, :, 1],
-                upper=True)
+                rel_std=rel_std)
             limits_mapped = np.zeros_like(limits)
-            limits_mapped[:, :, 0], y_min, y_0 = calc_funcs.map_aggarwal_ratio(
+
+            limits_mapped[:, :, 0], y_min = calc_funcs.map_aggarwal_limits(
                 limits[:, :, 0],
-                y_min=None,
                 y_0=1.,
                 upper=False)
             y_mins_limit[0] = y_min
 
-            limits_mapped[:, :, 1], y_min, y_0 = calc_funcs.map_aggarwal_ratio(
+            limits_mapped[:, :, 1], y_min = calc_funcs.map_aggarwal_limits(
                 limits[:, :, 1],
-                y_min=None,
                 y_0=1.,
                 upper=True)
             y_mins_limit[1] = y_min
@@ -168,15 +162,13 @@ class CalcAggarwalRatios(CalcPart):
             ratio = calc_funcs.calc_p_alpha_ratio(mu, k)
             upper = k > mu
             below = ~upper
-            ratio_mapped = np
+            ratio_mapped = np.array(ratio)
             ratio_mapped[below], y_below = calc_funcs.map_aggarwal_ratio(
                 ratio[below],
-                y_min=None,
                 y_0=1.,
                 upper=False)
             ratio_mapped[upper], y_upper = calc_funcs.map_aggarwal_ratio(
                 ratio[upper],
-                y_min=None,
                 y_0=1.,
                 upper=True)
 
@@ -592,12 +584,16 @@ class PlotRatioAggerwal(PlotPart):
         return self.ax
 
     def get_ax(self):
-        return [self.ax, self.ax_upper]
+        if self.zoomed:
+            return [self.ax, self.ax_upper]
+        else:
+            return self.ax
 
     def finish(self, result_tray):
         super(PlotRatioAggerwal, self).finish(result_tray)
-        self.ax_upper.set_xlim([result_tray.binning[0],
-                                result_tray.binning[-1]])
+        if self.zoomed:
+            self.ax_upper.set_xlim([result_tray.binning[0],
+                                    result_tray.binning[-1]])
 
     def execute(self, result_tray, component):
         result_tray = super(PlotRatioAggerwal, self).execute(result_tray,
@@ -609,31 +605,48 @@ class PlotRatioAggerwal(PlotPart):
         return result_tray
 
     def __execute_test__(self, result_tray, component):
-        y_mins_limit = result_tray.y_mins_limit
+        y_mins_ratio = result_tray.y_mins_ratio
         ratio_mapped = result_tray.ratio_mapped[1:-1]
         is_above = result_tray.is_above[1:-1]
         binning = result_tray.binning
-        factor_above = y_mins_limit[1] / self.y_min
-        factor_below = y_mins_limit[0] / self.y_min
-        ratio_mapped[is_above] *= y_mins_limit[is_above] * factor_above
-        ratio_mapped[~is_above] *= y_mins_limit[~is_above] * factor_below
+
+        ratio_unzoomed = np.array(ratio_mapped)
+        ratio_unzoomed[~is_above] = calc_funcs.rescale_ratio(
+            ratio_mapped[~is_above],
+            y_mins_ratio[0],
+            self.y_min)
+        ratio_unzoomed[is_above] = calc_funcs.rescale_ratio(
+            ratio_mapped[is_above],
+            y_mins_ratio[1],
+            self.y_min)
 
         self.y_min_scaled = self.__plot_test_marker__(
             fig=result_tray.fig,
             ax=self.ax,
             binning=binning,
-            ratio=ratio,
-            y_min=None,
+            ratio=ratio_unzoomed,
+            is_above=is_above,
+            y_min=self.y_min,
             facecolor=component.color,
             edgecolor='k',
             alpha=1.,
             annotation='Ratio: Smallest Value')
         if self.zoomed:
+            ratio_zoomed = np.array(ratio_mapped)
+            ratio_zoomed[~is_above] = calc_funcs.rescale_ratio(
+                ratio_mapped[~is_above],
+                y_mins_ratio[0],
+                self.zoom)
+            ratio_zoomed[is_above] = calc_funcs.rescale_ratio(
+                ratio_mapped[is_above],
+                y_mins_ratio[1],
+                self.zoom)
             self.__plot_test_marker__(
                 fig=result_tray.fig,
                 ax=self.ax_upper,
                 binning=binning,
-                ratio=ratio,
+                ratio=ratio_zoomed,
+                is_above=is_above,
                 y_min=self.zoom,
                 facecolor=component.color,
                 edgecolor='k',
@@ -642,22 +655,39 @@ class PlotRatioAggerwal(PlotPart):
 
     def __execute_ref__(self, result_tray, component):
         binning = result_tray.binning
-        limits = result_tray.limits_aggarwal
+        y_mins_limit = result_tray.y_mins_limit
+        limits_mapped = result_tray.limits_mapped[1:-1]
+        limits_unzoomed = np.copy(limits_mapped)
+        limits_unzoomed[:, :, 0] = calc_funcs.rescale_limit(
+            limits_mapped[:, :, 0],
+            y_mins_limit[0],
+            self.y_min)
+        limits_unzoomed[:, :, 1] = calc_funcs.rescale_limit(
+            limits_mapped[:, :, 1],
+            y_mins_limit[1],
+            self.y_min)
         self.__plot_ref_bands__(ax=self.ax,
                                 binning=binning,
-                                limits=limits,
+                                limits=limits_unzoomed,
                                 color=component.color,
                                 cmap=component.cmap,
-                                alphas=result_tray.alpha,
-                                y_min=self.y_min_scaled)
+                                alphas=result_tray.alpha)
         if self.zoomed:
+            limits_zoomed = np.copy(limits_mapped)
+            limits_zoomed[:, :, 0] = calc_funcs.rescale_limit(
+                limits_mapped[:, :, 0],
+                y_mins_limit[0],
+                self.zoom)
+            limits_zoomed[:, :, 1] = calc_funcs.rescale_limit(
+                limits_mapped[:, :, 1],
+                y_mins_limit[1],
+                self.zoom)
             self.__plot_ref_bands__(ax=self.ax_upper,
                                     binning=binning,
-                                    limits=limits,
+                                    limits=limits_zoomed,
                                     color=component.color,
                                     cmap=component.cmap,
-                                    alphas=result_tray.alpha,
-                                    y_min=self.zoom)
+                                    alphas=result_tray.alpha)
 
     def __plot_ref_bands__(self,
                            ax,
@@ -665,21 +695,14 @@ class PlotRatioAggerwal(PlotPart):
                            limits,
                            color,
                            cmap,
-                           alphas,
-                           y_min):
-        mapped_uncerts, y_0, y_min = calc_funcs.map_aggarwal_ratio(
-            limits,
-            y_min=y_min,
-            y_0=1.)
+                           alphas):
         plot_funcs.plot_line(ax=ax,
                              bin_edges=binning,
                              y=np.zeros(len(binning) - 1),
                              color=color)
-        neg_inf_mask = np.isneginf(mapped_uncerts)
-        mapped_uncerts[neg_inf_mask] = -1.
         plot_funcs.plot_uncertainties(ax=ax,
                                       bin_edges=binning,
-                                      uncert=mapped_uncerts[1:-1],
+                                      uncert=limits,
                                       color=color,
                                       cmap=cmap)
 
@@ -688,24 +711,23 @@ class PlotRatioAggerwal(PlotPart):
                              ax,
                              binning,
                              ratio,
+                             is_above,
                              y_min,
                              facecolor,
                              edgecolor,
                              alpha,
                              annotation):
-        mapped_uncerts, y_0, y_min = calc_funcs.map_aggarwal_ratio(
-            ratio,
-            y_min=y_min,
-            y_0=1.)
-        plot_funcs.plot_data_ratio_mapped(fig=fig,
+        plot_funcs.plot_test_ratio_mapped(fig=fig,
                                           ax=ax,
                                           bin_edges=binning,
-                                          ratio=mapped_uncerts,
+                                          ratio=ratio,
+                                          is_above=is_above,
                                           facecolor=facecolor,
                                           edgecolor=edgecolor,
                                           alpha=alpha)
         M_t, M_p, m_t, m_p = plot_funcs.generate_ticks_for_aggarwal_ratio(
-            y_0, y_min)
+            y_0=1.,
+            y_min=y_min)
         ax.set_yticklabels(M_t)
         ax.set_yticks(M_p)
         ax.set_yticks(m_p, minor=True)
