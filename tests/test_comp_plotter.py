@@ -12,18 +12,15 @@ logging.basicConfig(
 plotter = ComparisonPlotter()
 
 
-plotter.add_element('AggarwalHisto',
-                    binning_dict={'x': np.linspace(0., 1., 10)})
-plotter.add_element('AggarwalRatio')
+plotter.add_element('AggarwalHisto', n_bins=50, alpha=[0.68, 0.9, 0.99])
+plotter.add_element('AggarwalRatio', zoomed=True)
 plotter.add_element('Normalization', normalize='test_livetime')
 
 for i in range(1):
     X_ref = np.random.normal(loc=0., size=100000)
-    X_test = np.random.normal(loc=0, size=1000)
+    X_test = np.random.normal(loc=0.1, size=100000)
     plotter.add_ref('Sum MC', X_ref, livetime=100, color='k')
-    plotter.add_ref_part('Corsika', X_ref[:3000], livetime=100)
-    plotter.add_ref_part('Corsika', X_ref[3000:4000], livetime=100)
-    plotter.add_test('Data', X_test, livetime=1)
+    plotter.add_test('Data', X_test, livetime=100)
 
     fig, ax_dict, _ = plotter.draw('x')
     fig.savefig('test{}.png'.format(i))

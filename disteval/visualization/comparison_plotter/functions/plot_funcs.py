@@ -4,7 +4,7 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import ColorConverter
 from colorsys import rgb_to_hls, hls_to_rgb
 
-from .calc_funcs import map_aggarwal_ratio
+from .calc_funcs import map_aggarwal_ratio, rescale_limit
 
 from . import legend_entries as le
 
@@ -252,57 +252,65 @@ def plot_line(ax,
     return obj
 
 
-def plot_data_ratio_mapped(fig,
+def plot_test_ratio_mapped(fig,
                            ax,
                            bin_edges,
                            ratio,
+                           is_above,
                            facecolor,
                            edgecolor,
                            alpha):
     bin_mids = (bin_edges[1:] + bin_edges[:-1]) / 2.
-
-    finite_mask = np.isfinite(ratio)
-    neg_inf = np.isneginf(ratio)
-    pos_inf = np.isposinf(ratio)
-    oor_maker_pos = np.isclose(ratio, 1.1)
-    oor_maker_neg = np.isclose(ratio, -1.1)
-    finite_marker_mask = np.logical_and(
-        finite_mask,
-        ~np.logical_and(~oor_maker_neg, oor_maker_pos))
+    is_finite = np.isfinite(ratio)
+    finite_mask_upper = np.logical_and(is_finite, is_above)
+    finite_mask_lower = np.logical_and(is_finite, ~is_above)
 
     plot_finite_marker(ax,
-                       x=bin_mids[finite_marker_mask],
-                       y=ratio[finite_marker_mask],
+                       x=bin_mids[finite_mask_upper],
+                       y=ratio[finite_mask_upper],
+                       facecolor=facecolor,
+                       edgecolor=edgecolor,
+                       alpha=alpha)
+    plot_finite_marker(ax,
+                       x=bin_mids[finite_mask_lower],
+                       y=ratio[finite_mask_lower],
                        facecolor=facecolor,
                        edgecolor=edgecolor,
                        alpha=alpha)
 
+    oor_mask_upper = np.logical_and(is_above, np.isposinf(ratio))
+    no_ratio_mask_upper = np.logical_and(is_above, np.isneginf(ratio))
+
     plot_inf_marker(fig,
                     ax,
                     bin_edges,
-                    oor_maker_neg,
-                    markerfacecolor=facecolor,
-                    markeredgecolor=edgecolor,
-                    bot=True)
-    plot_inf_marker(fig,
-                    ax,
-                    bin_edges,
-                    oor_maker_pos,
+                    oor_mask_upper,
                     markerfacecolor=facecolor,
                     markeredgecolor=edgecolor,
                     bot=False)
     plot_inf_marker(fig,
                     ax,
                     bin_edges,
-                    neg_inf,
+                    no_ratio_mask_upper,
                     markerfacecolor=facecolor,
                     markeredgecolor=edgecolor,
                     bot=False,
                     alpha=0.5)
+
+    oor_mask_lower = np.logical_and(~is_above, np.isposinf(ratio))
+    no_ratio_mask_lower = np.logical_and(~is_above, np.isneginf(ratio))
+
     plot_inf_marker(fig,
                     ax,
                     bin_edges,
-                    pos_inf,
+                    oor_mask_lower,
+                    markerfacecolor=facecolor,
+                    markeredgecolor=edgecolor,
+                    bot=True)
+    plot_inf_marker(fig,
+                    ax,
+                    bin_edges,
+                    no_ratio_mask_lower,
                     markerfacecolor=facecolor,
                     markeredgecolor=edgecolor,
                     bot=True,
@@ -325,9 +333,12 @@ def generate_ticks_for_aggarwal_ratio(y_0, y_min, max_ticks_per_side=5):
         n_ticks += 2
     n_ticks_per_side = (n_ticks - 1) / 2
     mayor_step_size = np.ceil(n_ticks_per_side / max_ticks_per_side)
-    tick_pos_mapped, _, _ = map_aggarwal_ratio(np.power(10, tick_pos),
-                                               y_min=y_min,
-                                               y_0=y_0)
+    tick_pos_mapped, y_min_ticks = map_aggarwal_ratio(np.power(10, tick_pos),
+                                                      y_0=1.)
+    tick_pos_mapped = rescale_limit(tick_pos_mapped,
+                                    y_min_ticks,
+                                    y_min)
+
     mayor_ticks = []
     mayor_ticks_labels = []
 

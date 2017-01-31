@@ -59,7 +59,7 @@ class AggarwalHisto(Element):
                  n_bins=50,
                  y_label='Frequence',
                  log_y=True,
-                 alpha=[0.68, 0.9, 0.95],
+                 alpha=[0.68, 0.9, 0.99],
                  bands=False,
                  band_borders=True,
                  band_brighten=True,
