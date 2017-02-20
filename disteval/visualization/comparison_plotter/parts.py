@@ -235,17 +235,9 @@ class PlotHistClassic(PlotPart):
 
     def __init__(self,
                  log_y,
-                 bands,
-                 band_borders,
-                 band_brighten,
-                 band_alpha,
                  y_label):
         super(PlotHistClassic, self).__init__()
         self.log_y = log_y
-        self.bands = bands
-        self.band_borders = band_borders
-        self.band_brighten = band_brighten
-        self.band_alpha = band_alpha
         self.leg_labels = []
         self.leg_entries = []
         self.y_lower = None
@@ -266,28 +258,11 @@ class PlotHistClassic(PlotPart):
         binning = result_tray.binning
         y_vals = result_tray.sum_w[1:-1, component.idx]
         y_std = result_tray.rel_std_classic[1:-1, idx] * y_vals
-        y_low = y_vals - y_std
-        y_high = y_vals + y_std
-
-        if self.bands:
-            leg_obj = plot_funcs.plot_hist(ax=self.ax,
-                                           bin_edges=binning,
-                                           y=y_vals,
-                                           color=color)
-            plot_funcs.plot_band(ax=self.ax,
-                                 bin_edges=binning,
-                                 y_err_low=y_low,
-                                 y_err_high=y_high,
-                                 color=color,
-                                 alpha=1.0,
-                                 borders=False,
-                                 brighten=False)
-        else:
-            leg_obj = plot_funcs.plot_hist(ax=self.ax,
-                                           bin_edges=binning,
-                                           y=y_vals,
-                                           color=color,
-                                           yerr=y_std)
+        leg_obj = plot_funcs.plot_hist(ax=self.ax,
+                                       bin_edges=binning,
+                                       y=y_vals,
+                                       color=color,
+                                       yerr=y_std)
         if self.log_y:
             y_min = np.min(y_vals[y_vals > 0])
             if self.y_lower is None:
@@ -314,17 +289,9 @@ class PlotRatioClassic(PlotPart):
     rows = 1.5
 
     def __init__(self,
-                 bands,
-                 band_borders,
-                 band_brighten,
-                 band_alpha,
                  y_label=r'$\frac{\mathregular{Test - Ref}}{\sigma}$',
                  y_lims=None):
         super(PlotRatioClassic, self).__init__()
-        self.bands = bands
-        self.band_borders = band_borders
-        self.band_brighten = band_brighten
-        self.band_alpha = band_alpha
         self.y_label = y_label
         self.y_lims = y_lims
         self.abs_max = None
@@ -374,25 +341,11 @@ class PlotRatioClassic(PlotPart):
 
         ratio[mask] = (ref_vals[mask] - y_vals[mask]) / total_std[mask]
 
-        if self.bands:
-            plot_funcs.plot_line(ax=self.ax,
-                                 bin_edges=binning,
-                                 y=ratio,
-                                 color=color)
-            plot_funcs.plot_band(ax=self.ax,
-                                 bin_edges=binning,
-                                 y_err_low=ratio - np.ones_like(ratio),
-                                 y_err_high=ratio + np.ones_like(ratio),
-                                 color=color,
-                                 alpha=self.band_alpha,
-                                 borders=self.band_borders,
-                                 brighten=self.band_brighten)
-        else:
-            plot_funcs.plot_hist(ax=self.ax,
-                                 bin_edges=binning,
-                                 y=ratio,
-                                 color=color,
-                                 yerr=np.ones_like(ratio))
+        plot_funcs.plot_hist(ax=self.ax,
+                             bin_edges=binning,
+                             y=ratio,
+                             color=color,
+                             yerr=np.ones_like(ratio))
 
         abs_max = np.max(np.absolute(ratio[mask]))
         if self.y_lims is None:

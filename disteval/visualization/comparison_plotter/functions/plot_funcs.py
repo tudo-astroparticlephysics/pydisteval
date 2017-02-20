@@ -361,5 +361,3 @@ def generate_ticks_for_aggarwal_ratio(y_0, y_min, max_ticks_per_side=5):
                 minor_ticks_labels.extend([lab, lab])
                 mayor_tick_counter += 1
     return mayor_ticks_labels, mayor_ticks, minor_ticks_labels, minor_ticks
-
-

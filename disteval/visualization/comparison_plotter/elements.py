@@ -9,19 +9,11 @@ class ClassicHisto(Element):
                  n_bins=50,
                  y_label='Frequence',
                  log_y=True,
-                 bands=False,
-                 band_borders=True,
-                 band_brighten=True,
-                 band_alpha=0.5,
                  binning_dict=None):
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcClassicHistoErrors())
         plot_hist = parts.PlotHistClassic(log_y=log_y,
-                                          bands=bands,
-                                          band_borders=band_borders,
-                                          band_brighten=band_brighten,
-                                          band_alpha=band_alpha,
                                           y_label=y_label)
         self.plot_components.append(plot_hist)
 
@@ -32,10 +24,6 @@ class ClassicRatio(Element):
     def __init__(self,
                  n_bins=50,
                  y_label=r'$\frac{\mathregular{Test - Ref}}{\sigma}$',
-                 bands=False,
-                 band_borders=True,
-                 band_brighten=True,
-                 band_alpha=0.5,
                  y_lims=None,
                  binning_dict=None):
         self.calc_components.append(parts.CalcBinning(
@@ -43,11 +31,7 @@ class ClassicRatio(Element):
             binning_dict=binning_dict))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcClassicHistoErrors())
-        plot_ratio = parts.PlotRatioClassic(bands=bands,
-                                            band_borders=band_borders,
-                                            band_brighten=band_brighten,
-                                            band_alpha=band_alpha,
-                                            y_lims=y_lims,
+        plot_ratio = parts.PlotRatioClassic(y_lims=y_lims,
                                             y_label=y_label)
         self.plot_components.append(plot_ratio)
 

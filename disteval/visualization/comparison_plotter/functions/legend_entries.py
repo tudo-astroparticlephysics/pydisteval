@@ -98,7 +98,7 @@ class uncert_handler_single(object):
         handlebox.add_artist(rec)
         return rec
 
+
 handler_mapper = {DataObject: data_handler(),
                   UncertObject: uncert_handler(),
                   UncertObject_single: uncert_handler_single()}
-
