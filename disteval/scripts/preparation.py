@@ -11,7 +11,8 @@ def prepare_data(test_df,
                  ref_df,
                  test_weight=None,
                  ref_weight=None,
-                 test_ref_ratio=1.):
+                 test_ref_ratio=1.,
+                 random_state=None):
     """Makes the data usable for sklearn.
 
     Parameters
@@ -34,6 +35,12 @@ def prepare_data(test_df,
         Ratio of test and train data. If weights are provided, the ratio
         is for the sum of weights.
 
+    random_state: None, int or RandomState
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by np.random.
+
     Returns
     -------
     X : numpy.float32array, shape=(n_samples, n_obs)
@@ -54,6 +61,8 @@ def prepare_data(test_df,
     """
 
     log.debug("Praparing Data")
+    if not isinstance(random_state, np.random.RandomState):
+        random_state = np.random.RandomState(random_state)
     # make the dataframe homogenious
     test_X_names = set(test_df.columns)
     ref_X_names = set(ref_df.columns)
@@ -120,12 +129,12 @@ def prepare_data(test_df,
         n_ref = len(y_ref)
     if n_test / n_ref > test_ref_ratio:
         probability = (test_ref_ratio * n_ref) / n_test
-        seleceted = np.random.uniform(size=y_test.shape[0]) <= probability
+        seleceted = random_state.uniform(size=y_test.shape[0]) <= probability
         X_test, y_test, sample_weight_test = shrink_data(
             seleceted, X_test, y_test, sample_weight_test)
     elif n_test / n_ref <= test_ref_ratio:
         probability = n_test / (n_ref * test_ref_ratio)
-        seleceted = np.random.uniform(size=y_ref.shape[0]) <= probability
+        seleceted = random_state.uniform(size=y_ref.shape[0]) <= probability
         X_ref, y_ref, sample_weight_ref = shrink_data(
             seleceted, X_ref, y_ref, sample_weight_ref)
     # Combining ref and test data into single numpy arrays

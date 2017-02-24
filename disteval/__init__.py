@@ -20,7 +20,8 @@ def cv_test_ref_classification(clf,
                                y,
                                sample_weight=None,
                                cv_steps=10,
-                               return_all_models=False):
+                               return_all_models=False,
+                               random_state=None):
     """Runs a classification betwenn the test data and the reference data.
     This classification is run in a cross-validation with a provided
     classifier. The classifier needs a fit function to start the model
@@ -51,6 +52,12 @@ def cv_test_ref_classification(clf,
         If all models for the cross-validiation should be saved and
         returned.
 
+    random_state: None, int or RandomState
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by np.random.
+
     Returns
     -------
     clf: object
@@ -63,6 +70,8 @@ def cv_test_ref_classification(clf,
     cv_step : numpy.int, shape=(n_samples)
         Iteration in which the sample was classified.
     """
+    if not isinstance(random_state, np.random.RandomState):
+        random_state = np.random.RandomState(random_state)
     desired_characteristics = ClassifierCharacteristics()
     desired_characteristics.opts['callable:fit'] = True
     desired_characteristics.opts['callable:predict_proba'] = True
@@ -79,7 +88,8 @@ def cv_test_ref_classification(clf,
 
     else:
         strat_kfold = StratifiedKFold(n_splits=cv_steps,
-                                      shuffle=True)
+                                      shuffle=True,
+                                      random_state=random_state)
         cv_iterator = strat_kfold.split(X, y)
         y_pred = np.zeros_like(y, dtype=float)
         cv_step = np.zeros_like(y, dtype=int)
