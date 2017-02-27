@@ -74,7 +74,8 @@ def get_all_auc_scores(clf,
                        sample_weight=None,
                        cv_steps=10,
                        n_jobs=1,
-                       forward=True):
+                       forward=True,
+                       random_state=None):
     """Method determining the 'area under curve' for all not yet
     selected features. In this function also the feature sets for the
     tests are created.
@@ -106,17 +107,27 @@ def get_all_auc_scores(clf,
         If True it is a 'forward selection'. If False it is a 'backward
         elimination'.
 
+    random_state: None, int or RandomState
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by np.random.
+
     Returns
     -------
     auc_scores: np.array float shape(n_features_total)
         Return a array containing the auc values. np.nan is the feature
         is already selected.
     """
+    if not isinstance(random_state, np.random.RandomState):
+        random_state = np.random.RandomState(random_state)
     selected_features = np.array(selected_features, dtype=int)
     if cv_steps < 2:
         raise ValueError('\'cv_steps\' must be 2 or higher')
     else:
-        cv_iterator = StratifiedKFold.split(n_splits=cv_steps)
+        cv_iterator = StratifiedKFold.split(n_splits=cv_steps,
+                                            shuffle=True,
+                                            random_state=random_state)
         cv_indices = [[train, test] for train, test in cv_iterator.split(X, y)]
     test_features = np.array([int(i) for i in range(X.shape[1])
                               if i not in selected_features], dtype=int)
