@@ -53,6 +53,6 @@ setup(
     entry_points={
         'console_scripts': ['fact_example=examples.fact_example.py:main'],
     },
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest'],
+    #setup_requires=['pytest-runner'],
+    #tests_require=['pytest'],
 )

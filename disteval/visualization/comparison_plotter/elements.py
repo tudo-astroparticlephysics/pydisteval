@@ -10,6 +10,7 @@ class ClassicHisto(Element):
                  y_label='Frequence',
                  log_y=True,
                  binning_dict=None):
+        super(ClassicHisto, self).__init__()
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcClassicHistoErrors())
@@ -26,6 +27,7 @@ class ClassicRatio(Element):
                  y_label=r'$\frac{\mathregular{Test - Ref}}{\sigma}$',
                  y_lims=None,
                  binning_dict=None):
+        super(ClassicRatio, self).__init__()
         self.calc_components.append(parts.CalcBinning(
             n_bins=n_bins,
             binning_dict=binning_dict))
@@ -49,6 +51,7 @@ class AggarwalHisto(Element):
                  band_brighten=True,
                  band_alpha=0.5,
                  binning_dict=None):
+        super(AggarwalHisto, self).__init__()
         self.calc_components.append(parts.CalcBinning(
             n_bins=n_bins,
             binning_dict=binning_dict))
@@ -72,6 +75,7 @@ class AggarwalRatio(Element):
                  alpha=[0.68, 0.9, 0.95],
                  zoomed=True,
                  binning_dict=None):
+        super(AggarwalRatio, self).__init__()
         self.calc_components.append(parts.CalcBinning(
             n_bins=n_bins,
             binning_dict=binning_dict))
@@ -86,6 +90,7 @@ class Normalization(Element):
     name = 'Normalization'
 
     def __init__(self, normalize=None):
+        super(Normalization, self).__init__()
         if normalize is None:
             normalize = False
         if isinstance(normalize, bool):

@@ -97,17 +97,16 @@ class PlotPart(Part):
 
 class Element:
     name = 'DefaultElement'
-    plot_components = []
-    calc_components = []
     logger = logging.getLogger("Element ")
 
     def __init__(self):
-        pass
+        self.plot_components = []
+        self.calc_components = []
 
     def register(self, comparator):
-        for calc_comp_i in Element.calc_components:
+        for calc_comp_i in self.calc_components:
             comparator._register_calc_part(calc_comp_i)
-        for plot_comp_i in Element.plot_components:
+        for plot_comp_i in self.plot_components:
             comparator._register_plot_part(plot_comp_i)
 
     def __eq__(self, other):

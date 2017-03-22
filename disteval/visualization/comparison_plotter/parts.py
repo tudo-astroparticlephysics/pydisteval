@@ -339,7 +339,7 @@ class PlotRatioClassic(PlotPart):
         total_std[:] = np.nan
         total_std[mask] = np.sqrt(y_std[mask]**2 + ref_std[mask]**2)
 
-        ratio[mask] = (ref_vals[mask] - y_vals[mask]) / total_std[mask]
+        ratio[mask] = (y_vals[mask] - ref_vals[mask]) / total_std[mask]
 
         plot_funcs.plot_hist(ax=self.ax,
                              bin_edges=binning,
