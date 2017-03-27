@@ -8,7 +8,7 @@ class ClassicHisto(Element):
     def __init__(self,
                  n_bins=50,
                  y_label='Frequence',
-                 log_y=True,
+                 log_y=False,
                  binning_dict=None):
         super(ClassicHisto, self).__init__()
         self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
@@ -44,7 +44,7 @@ class AggarwalHisto(Element):
     def __init__(self,
                  n_bins=50,
                  y_label='Frequence',
-                 log_y=True,
+                 log_y=False,
                  alpha=[0.68, 0.9, 0.99],
                  bands=False,
                  band_borders=True,

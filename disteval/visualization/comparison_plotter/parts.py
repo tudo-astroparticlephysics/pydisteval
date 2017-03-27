@@ -282,6 +282,7 @@ class PlotHistClassic(PlotPart):
                        self.leg_labels,
                        loc='best',
                        prop={'size': 11})
+        self.leg_labels = []
 
 
 class PlotRatioClassic(PlotPart):
@@ -363,7 +364,8 @@ class PlotRatioClassic(PlotPart):
                               self.abs_max * 1.5])
         else:
             self.ax.set_ylim(self.y_lims)
-
+        self.leg_labels = []
+        self.leg_entries = []
 
 class PlotHistAggerwal(PlotPart):
     name = 'PlotHistAggerwal'
