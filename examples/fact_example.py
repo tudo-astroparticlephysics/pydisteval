@@ -6,7 +6,8 @@ import logging
 from sklearn.ensemble import RandomForestClassifier
 
 import disteval
-from disteval import evaluation as eval
+from disteval import evaluation
+from disteval import visualization
 
 log = logging.getLogger("disteval.fact_example")
 
@@ -103,7 +104,11 @@ def main():
     clf, y_pred, cv_step = disteval.cv_test_ref_classification(
         clf, X, y, sample_weight, cv_steps=10, return_all_models=True)
 
-    kept, mean_imp, std_imp = eval.feature_importance_mad(clf, alpha=0.05)
+    kept, mean_imp, std_imp = evaluation.feature_importance_mad(
+        clf, alpha=0.05)
+    visualize_feature_importance_mad(return_list=[kept, mean_imp, std_imp],
+                                     X_names=X_names,
+                                     save_path='FI_mad.png')
     removed_features_str = ''
     for i in np.argsort(mean_imp)[::-1]:
         if not kept[i]:
@@ -113,8 +118,11 @@ def main():
     log.info("[Order from high to low mean importance]")
     log.info(removed_features_str)
 
-    kept, mean_imp, std_imp = eval.feature_importance_mad_majority(
+    kept, mean_imp, std_imp = evaluation.feature_importance_mad_majority(
         clf, ratio=0.9, alpha=0.10)
+    visualize_feature_importance_mad(return_list=[kept, mean_imp, std_imp],
+                                     X_names=X_names,
+                                     save_path='FI_mad_majority.png')
     removed_features_str = ''
     for i in np.argsort(mean_imp)[::-1]:
         if not kept[i]:
