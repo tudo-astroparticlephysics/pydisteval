@@ -125,9 +125,11 @@ def get_all_auc_scores(clf,
     if cv_steps < 2:
         raise ValueError('\'cv_steps\' must be 2 or higher')
     else:
-        cv_iterator = StratifiedKFold.split(n_splits=cv_steps,
-                                            shuffle=True,
-                                            random_state=random_state)
+        cv_iterator = StratifiedKFold(
+            n_splits=cv_steps,
+            shuffle=True,
+            random_state=random_state,
+        )
         cv_indices = [[train, test] for train, test in cv_iterator.split(X, y)]
     test_features = np.array([int(i) for i in range(X.shape[1])
                               if i not in selected_features], dtype=int)
