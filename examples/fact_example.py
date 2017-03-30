@@ -88,10 +88,10 @@ def main():
     data_df = data_df.loc[:, training_variables]
     mc_df = mc_df.loc[:, training_variables]
 
-    clf = RandomForestClassifier(n_jobs=40, n_estimators=200)
+    clf = RandomForestClassifier(n_jobs=4, n_estimators=20)
 
     log.info("Data preparation")
-    X, y, sample_weight, X_names = disteval.prepare_data(mc_df,
+    X, y, sample_weight, X_names = disteval.prepare_data(mc_df[:10000],
                                                          data_df,
                                                          test_weight=None,
                                                          ref_weight=None,
