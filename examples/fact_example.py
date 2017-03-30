@@ -85,7 +85,7 @@ def main():
     mc_df = pd.read_hdf(test_filename2)
 
     log.info("Reducing Features")
-    data_df = data_df.loc[:, training_variables]
+    data_df = data_df.loc[:10000, training_variables]
     mc_df = mc_df.loc[:, training_variables]
 
     clf = RandomForestClassifier(n_jobs=4, n_estimators=20)
