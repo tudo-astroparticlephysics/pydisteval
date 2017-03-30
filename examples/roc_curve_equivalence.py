@@ -4,6 +4,7 @@
 '''
 import logging
 import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 
 from sklearn.datasets import make_classification
@@ -13,8 +14,8 @@ import disteval
 from disteval import evaluation as eval
 from disteval import visualization as visu
 
-log = logging.getLogger("disteval.fact_example")
-matplotlib.use('Agg')
+log = logging.getLogger("disteval.roc_curve_equivalence_example")
+
 
 
 def main():

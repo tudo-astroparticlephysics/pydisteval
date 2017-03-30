@@ -1,11 +1,12 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from logging import getLogger
 import warnings
 
 import numpy as np
-import logging
-log = logging.getLogger('disteval.preparation')
-log.setLevel(logging.INFO)
+
+
+logger = getLogger('disteval.preparation')
+
 
 def prepare_data(test_df,
                  ref_df,

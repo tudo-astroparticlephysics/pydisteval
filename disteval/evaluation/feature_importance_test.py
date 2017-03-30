@@ -1,9 +1,7 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 
-from sklearn.metrics import roc_curve
-
-from ..scripts.classifier_characteristics import ClassifierCharacteristics
+from ..basics.classifier_characteristics import ClassifierCharacteristics
 
 
 def feature_importance_mad(clf, alpha=0.05):

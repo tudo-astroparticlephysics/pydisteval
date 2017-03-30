@@ -5,6 +5,7 @@ import numpy as np
 
 from sklearn.model_selection import StratifiedKFold
 
+from .basics.classifier_characteristics import ClassifierCharacteristics
 
 logger = getLogger('disteval.basic_classification')
 
