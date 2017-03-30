@@ -8,6 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 
 from .scripts.classifier_characteristics import ClassifierCharacteristics
 from .scripts.recursive_selection_parallel import get_all_auc_scores
+from .scripts.preparation import prepare_data
 
 
 logger = getLogger('disteval')
