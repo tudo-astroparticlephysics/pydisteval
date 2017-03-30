@@ -106,7 +106,7 @@ def main():
 
     kept, mean_imp, std_imp = evaluation.feature_importance_mad(
         clf, alpha=0.05)
-    visualize_feature_importance_mad(return_list=[kept, mean_imp, std_imp],
+    visualization.visualize_feature_importance_mad(return_list=[kept, mean_imp, std_imp],
                                      X_names=X_names,
                                      save_path='FI_mad.png')
     removed_features_str = ''
@@ -120,7 +120,7 @@ def main():
 
     kept, mean_imp, std_imp = evaluation.feature_importance_mad_majority(
         clf, ratio=0.9, alpha=0.10)
-    visualize_feature_importance_mad(return_list=[kept, mean_imp, std_imp],
+    visualization.visualize_feature_importance_mad(return_list=[kept, mean_imp, std_imp],
                                      X_names=X_names,
                                      save_path='FI_mad_majority.png')
     removed_features_str = ''

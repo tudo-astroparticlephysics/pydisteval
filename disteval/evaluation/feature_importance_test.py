@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 
-from scipa.stats import norm
+from scipy.stats import norm
 
 from ..basics.classifier_characteristics import ClassifierCharacteristics
 
