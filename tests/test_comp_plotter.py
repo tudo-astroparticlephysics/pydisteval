@@ -1,7 +1,7 @@
 import logging
 import os
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('agg')
 import numpy as np
 
 from disteval.visualization.comparison_plotter import ComparisonPlotter

@@ -1,12 +1,16 @@
 import numpy as np
 import pandas as pd
+import matplotlib
+
+matplotlib.use('agg')
 
 import logging
 
 from sklearn.ensemble import RandomForestClassifier
 
 import disteval
-from disteval import evaluation as eval
+from disteval import evaluation
+from disteval import visualization
 
 log = logging.getLogger("disteval.fact_example")
 
@@ -84,13 +88,13 @@ def main():
     mc_df = pd.read_hdf(test_filename2)
 
     log.info("Reducing Features")
-    data_df = data_df.loc[:, training_variables]
+    data_df = data_df.loc[:10000, training_variables]
     mc_df = mc_df.loc[:, training_variables]
 
-    clf = RandomForestClassifier(n_jobs=40, n_estimators=200)
+    clf = RandomForestClassifier(n_jobs=4, n_estimators=20)
 
     log.info("Data preparation")
-    X, y, sample_weight, X_names = disteval.prepare_data(mc_df,
+    X, y, sample_weight, X_names = disteval.prepare_data(mc_df[:10000],
                                                          data_df,
                                                          test_weight=None,
                                                          ref_weight=None,
@@ -103,7 +107,11 @@ def main():
     clf, y_pred, cv_step = disteval.cv_test_ref_classification(
         clf, X, y, sample_weight, cv_steps=10, return_all_models=True)
 
-    kept, mean_imp, std_imp = eval.feature_importance_mad(clf, alpha=0.05)
+    kept, mean_imp, std_imp = evaluation.feature_importance_mad(
+        clf, alpha=0.05)
+    visualization.visualize_feature_importance_mad(return_list=[kept, mean_imp, std_imp],
+                                     X_names=X_names,
+                                     save_path='FI_mad.png')
     removed_features_str = ''
     for i in np.argsort(mean_imp)[::-1]:
         if not kept[i]:
@@ -113,8 +121,11 @@ def main():
     log.info("[Order from high to low mean importance]")
     log.info(removed_features_str)
 
-    kept, mean_imp, std_imp = eval.feature_importance_mad_majority(
+    kept, mean_imp, std_imp = evaluation.feature_importance_mad_majority(
         clf, ratio=0.9, alpha=0.10)
+    visualization.visualize_feature_importance_mad(return_list=[kept, mean_imp, std_imp],
+                                     X_names=X_names,
+                                     save_path='FI_mad_majority.png')
     removed_features_str = ''
     for i in np.argsort(mean_imp)[::-1]:
         if not kept[i]:
