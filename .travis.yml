@@ -2,10 +2,13 @@ language: python
 
 python:
   - "3.5"
+  - "3.6"
+  - "2.7"
 
 install:
   # pyflakes for general syntax check
   - pip install pyflakes
+  - pip install futures
   - pip install .
 
 script:
