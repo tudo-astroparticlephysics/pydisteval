@@ -1,3 +1,4 @@
+from __future__ import absolute_import, print_function, division
 from matplotlib import pyplot as plt
 from matplotlib.colors import Colormap
 
@@ -21,7 +22,7 @@ CMAP_CYCLE = ['viridis_r',
               'inferno_r']
 
 
-class ColorPalette:
+class ColorPalette(object):
     def __init__(self, color_cycle=None, cmap_cycle=None):
         if color_cycle is None:
             self.color_cycle = COLOR_CYCLE
@@ -58,7 +59,7 @@ class ColorPalette:
         self.cmap_pointer = 0
 
 
-class Component:
+class Component(object):
     def __init__(self, idx, label, c_type, X, livetime=1,
                  weights=None, color=None, cmap=None):
         assert c_type in ['ref', 'ref_part', 'test', 'test_part'], \

@@ -1,9 +1,10 @@
+from __future__ import absolute_import, print_function, division
 import logging
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 
 
-class Part:
+class Part(object):
     name = 'BasePart'
     level = 1
     logger = logging.getLogger("Part    ")
@@ -95,7 +96,7 @@ class PlotPart(Part):
         return result_tray
 
 
-class Element:
+class Element(object):
     name = 'DefaultElement'
     logger = logging.getLogger("Element ")
 
@@ -116,6 +117,6 @@ class Element:
             return self.name == other
 
 
-class ResultTray:
+class ResultTray(object):
     def add(self, obj, name):
         setattr(self, name, obj)

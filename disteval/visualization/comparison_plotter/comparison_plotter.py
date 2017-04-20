@@ -6,6 +6,7 @@ high quality plots for the comparison of two distributions. It is
 especially designed for automated use and tries to minimize the
 knowledge in before hand.
 """
+from __future__ import absolute_import, print_function, division
 import logging
 
 from matplotlib import pyplot as plt
@@ -22,7 +23,7 @@ REGISTERED_ELEMENTS = {'aggarwalhisto': elements.AggarwalHisto,
 logger = logging.getLogger("ComparisonPlotter ")
 
 
-class ComparisonPlotter:
+class ComparisonPlotter(object):
     """Class to build up the plot layout and produce the plots!
 
     All parts of the plots are in some way histograms, so continous
