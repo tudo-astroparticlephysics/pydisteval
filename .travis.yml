@@ -8,7 +8,6 @@ python:
 install:
   # pyflakes for general syntax check
   - pip install pyflakes
-  - pip install futures
   - pip install .
 
 script:
