@@ -48,7 +48,8 @@ setup(
         'scikit-learn>=0.18.1',
         'tables',
         'h5py',
-        'scipy'],
+        'scipy',
+        'futures'],
 
     entry_points={
         'console_scripts': ['fact_example=examples.fact_example.py:main'],
