@@ -7,10 +7,26 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
 
 
-logger = logging.getLogger('TreeBinningSklearn')
+logger = logging.getLogger('disteval.discretization.TreeBinningSklearn')
 
 
 def __sample_uniform__(y, sample_weight=None):
+    """Function used to sample a uniform distribution from a binned y.
+
+    Parameters
+    ----------
+    y : numpy.intarray, shape=(n_samples)
+        Array of the true classification labels.
+
+    y : numpy.floatarray, shape=(n_samples)
+        Event weights.
+
+    Returns
+    -------
+    mask: list of bools
+        A boolean mask for y. True for events that should be kept.
+    """
+    logger.info('Sampling uniform distributed class label!')
     freq = np.bincount(y, weights=sample_weight)
     mask = freq > 0
     if sample_weight is None:
@@ -21,6 +37,29 @@ def __sample_uniform__(y, sample_weight=None):
 
 
 def get_family(tree):
+    """Function to get the relations between nodes in a sklean tree.
+
+    Parameters
+    ----------
+    tree : sklearn.tree._tree.Tree
+        Tree form which the relations should be extracted
+
+    Returns
+    -------
+    parents : array of ints, shape=(n_nodes)
+        List of the parents of each node. -1 indicates no parents and
+        should only appear for the first node.
+
+    grand_parents : array of ints, shape=(n_nodes)
+        List of the parents of each node. -1 indicates no parents and
+        should only appear for the first node.
+
+    siblings : array of ints, shape=(n_nodes)
+        List of the parents of each node. -1 indicates no parents and
+        should only appear for the first node.
+    """
+    logger.debug('Creating array for tree relations.')
+
     def walk_path(tree, idx, last_idx, node_list):
         node_list.append([idx, last_idx])
         l_child = tree.children_left[idx]
@@ -87,6 +126,8 @@ class TreeBinningSklearn(object):
         self.random_state = random_state
         self.regression = regression
         if regression:
+            logger.info('Initialized TreeBiningSklearn with a '
+                         'regression tree.')
             self.tree = DecisionTreeRegressor(
                 max_depth=max_depth,
                 min_samples_split=min_samples_split,
@@ -95,6 +136,7 @@ class TreeBinningSklearn(object):
                 max_features=max_features,
                 random_state=random_state)
             if boosted in ['linear', 'square', 'exponential']:
+                logger.info('Activated AdaBoost!')
                 self.boosted = AdaBoostRegressor(
                     base_estimator=self.tree,
                     n_estimators=n_estimators,
@@ -110,6 +152,8 @@ class TreeBinningSklearn(object):
             else:
                 self.boosted = None
         else:
+            logger.info('Initialized TreeBiningSklearn with a '
+                         'classification tree.')
             self.tree = DecisionTreeClassifier(
                 max_depth=max_depth,
                 min_samples_split=min_samples_split,
@@ -118,6 +162,7 @@ class TreeBinningSklearn(object):
                 max_features=max_features,
                 random_state=random_state)
             if boosted in ['SAMME', 'SAMME.R']:
+                logger.info('Activated AdaBoost!')
                 self.boosted = AdaBoostClassifier(
                     base_estimator=self.tree,
                     n_estimators=n_estimators,
@@ -140,6 +185,7 @@ class TreeBinningSklearn(object):
             y,
             sample_weight=None,
             uniform=True):
+        logger.info('Start to fit the model!')
         if self.regression and uniform:
             logger.warn('Uniform smapling is only supported for classifcation')
         elif uniform:
@@ -155,9 +201,11 @@ class TreeBinningSklearn(object):
                              sample_weight=sample_weight)
             if self.ensemble_select == 'best':
                 tree_idx = np.argmax(self.boosted.estimator_weights_)
-
+                logger.info('{} has the highest estimator weight.'.format(
+                    tree_idx))
             elif self.ensemble_select == 'last':
                 tree_idx = -1
+                logger.info('Last tree selected!')
             self.tree = self.boosted.estimators_[tree_idx]
         else:
             self.tree.fit(X=X,
@@ -168,6 +216,7 @@ class TreeBinningSklearn(object):
 
 
     def generate_leaf_mapping(self):
+        logger.debug('Mapping for leafs is created.')
         self.leaf_idx_mapping = {}
         is_leaf = np.where(self.tree.tree_.feature == -2)[0]
         counter = 0
@@ -195,6 +244,8 @@ class TreeBinningSklearn(object):
         return clone
 
     def prune(self, X, threshold):
+        logger.info('Started to prune leafs with less than {} events.'.format(
+            threshold))
         tree = self.tree.tree_
 
         def find_withered_leaf():
@@ -210,7 +261,7 @@ class TreeBinningSklearn(object):
                 return is_leaf_below_idx[idx_min_leaf]
             else:
                 return None
-
+        n_bins_before_pruning = self.n_bins
         while True:
             idx = find_withered_leaf()
             if idx is None:
@@ -218,4 +269,6 @@ class TreeBinningSklearn(object):
             else:
                 remove_node(tree, idx)
                 self.generate_leaf_mapping()
-
+        n_bins_after_pruning = self.n_bins
+        logger.info('Number of leafs reduced from {} to {}.'.format(
+            n_bins_before_pruning, n_bins_after_pruning))
