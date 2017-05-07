@@ -20,7 +20,7 @@ def __sample_uniform__(y, sample_weight=None):
     return rnd <= 1.
 
 
-def get_parents(tree):
+def get_family(tree):
     def walk_path(tree, idx, last_idx, node_list):
         node_list.append([idx, last_idx])
         l_child = tree.children_left[idx]
@@ -32,36 +32,40 @@ def get_parents(tree):
         return node_list
 
     node_list = walk_path(tree, 0, -1, [])
-    parents = np.zeros_like(tree.children_left, dtype=int)
+    parents = np.ones_like(tree.children_left, dtype=int) * -1
+    grand_parents = np.ones_like(tree.children_left, dtype=int) * -1
+    siblings = np.ones_like(tree.children_left, dtype=int) * -1
     for own_idx, parent_idx in node_list:
         parents[own_idx] = parent_idx
-    return parents
+        grand_parents[own_idx] = parents[parent_idx]
+    for parent_idx in parents:
+        l_child_idx = tree.children_left[parent_idx]
+        r_child_idx = tree.children_left[parent_idx]
+        siblings[l_child_idx] = r_child_idx
+        siblings[r_child_idx] = l_child_idx
+    return parents, grand_parents, siblings
 
 
-def remove_node(tree, node_idx):
+def delete_node(tree, node_idx):
     tree.children_right[node_idx] = -4
     tree.children_left[node_idx] = -4
     tree.feature[node_idx] = -4
     tree.threshold[node_idx] = -4
 
 
-def set_to_leaf(tree, node_idx):
-    l_child = tree.children_left[node_idx]
-    r_child = tree.children_left[node_idx]
-    if l_child == -1 and r_child == -1:
-        logger.warn('{} is already a leaf!')
-    elif l_child == -1 and r_child != -1:
-        raise RuntimeError('Broken Tree! l_child is -1 while r_child is != -1')
-    elif l_child != -1 and r_child == -1:
-        raise RuntimeError('Broken Tree! r_child is -1 while l_child is != -1')
-    else:
-        remove_node(tree, l_child)
-        remove_node(tree, r_child)
+def remove_node(tree, node_idx):
+    parents, grand_parents, siblings = get_family(tree)
 
-        tree.children_right[node_idx] = -1
-        tree.children_left[node_idx] = -1
-        tree.feature[node_idx] = -2
-        tree.threshold[node_idx] = -2
+    parent_idx = parents[node_idx]
+    sibling_idx = siblings[node_idx]
+
+    tree.children_right[parent_idx] = tree.children_right[sibling_idx]
+    tree.children_left[parent_idx] = tree.children_left[sibling_idx]
+    tree.feature[parent_idx] = tree.feature[sibling_idx]
+    tree.threshold[parent_idx] = tree.threshold[sibling_idx]
+
+    delete_node(tree, sibling_idx)
+    return parent_idx, sibling_idx
 
 
 class TreeBinningSklearn(object):
@@ -159,6 +163,11 @@ class TreeBinningSklearn(object):
             self.tree.fit(X=X,
                           y=y,
                           sample_weight=sample_weight)
+
+        self.generate_leaf_mapping()
+
+
+    def generate_leaf_mapping(self):
         self.leaf_idx_mapping = {}
         is_leaf = np.where(self.tree.tree_.feature == -2)[0]
         counter = 0
@@ -188,28 +197,25 @@ class TreeBinningSklearn(object):
     def prune(self, X, threshold):
         tree = self.tree.tree_
 
-        leafyfied = self.tree.apply(X)
-        occureance = np.bincount(leafyfied, minlength=tree.node_count)
+        def find_withered_leaf():
+            leafyfied = self.tree.apply(X)
+            occureance = np.bincount(leafyfied, minlength=tree.node_count)
 
-        parents = get_parents(tree)
-
-        is_leaf = np.where(self.tree.children_right == -1)[0]
-        is_below = occureance < threshold
-        is_leaf_below = np.logical_and(is_leaf, is_below)
-        while any(is_leaf_below):
-            idx = np.where(is_leaf_below)[0][-1]
-            parent_idx = parents[idx]
-            set_to_leaf(tree, parent_idx)
-
-            l_child = tree.children_left[parent_idx]
-            r_child = tree.children_right[parent_idx]
-
-            is_leaf[l_child] = False
-            is_leaf[r_child] = False
-            is_leaf[parent_idx] = True
-
-            occureance[parent_idx] += occureance[idx]
-            occureance[parent_idx] += occureance[idx]
+            is_leaf = np.where(self.tree.children_right == -1)[0]
             is_below = occureance < threshold
-
             is_leaf_below = np.logical_and(is_leaf, is_below)
+            if any(is_leaf_below):
+                is_leaf_below_idx = np.where(is_leaf_below)
+                idx_min_leaf = np.argmin(occureance[is_leaf_below_idx])
+                return is_leaf_below_idx[idx_min_leaf]
+            else:
+                return None
+
+        while True:
+            idx = find_withered_leaf()
+            if idx is None:
+                break
+            else:
+                remove_node(tree, idx)
+                self.generate_leaf_mapping()
+
