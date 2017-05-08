@@ -317,7 +317,7 @@ class TreeBinningSklearn(object):
     def fit(self,
             X,
             y,
-            sample_weight=False,
+            sample_weight=None,
             uniform=True):
         """Build a (boosted) classification/regression tree from the training
         set (X, y).
