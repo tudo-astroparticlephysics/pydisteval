@@ -78,10 +78,11 @@ def get_family(tree):
         parents[own_idx] = parent_idx
         grand_parents[own_idx] = parents[parent_idx]
     for parent_idx in parents:
-        l_child_idx = tree.children_left[parent_idx]
-        r_child_idx = tree.children_left[parent_idx]
-        siblings[l_child_idx] = r_child_idx
-        siblings[r_child_idx] = l_child_idx
+        if parent_idx != -1:
+            l_child_idx = tree.children_left[parent_idx]
+            r_child_idx = tree.children_right[parent_idx]
+            siblings[l_child_idx] = r_child_idx
+            siblings[r_child_idx] = l_child_idx
     return parents, grand_parents, siblings
 
 
@@ -125,8 +126,8 @@ def remove_node(tree, node_idx):
     tree.children_left[parent_idx] = tree.children_left[sibling_idx]
     tree.feature[parent_idx] = tree.feature[sibling_idx]
     tree.threshold[parent_idx] = tree.threshold[sibling_idx]
-
     delete_node(tree, sibling_idx)
+    delete_node(tree, node_idx)
     return parent_idx, sibling_idx
 
 
@@ -514,14 +515,13 @@ class TreeBinningSklearn(object):
         def find_withered_leaf():
             leafyfied = self.tree.apply(X)
             occureance = np.bincount(leafyfied, minlength=tree.node_count)
-
-            is_leaf = np.where(self.tree.children_right == -1)[0]
+            is_leaf = tree.children_right == -1
             is_below = occureance < threshold
             is_leaf_below = np.logical_and(is_leaf, is_below)
             if any(is_leaf_below):
                 is_leaf_below_idx = np.where(is_leaf_below)
                 idx_min_leaf = np.argmin(occureance[is_leaf_below_idx])
-                return is_leaf_below_idx[idx_min_leaf]
+                return is_leaf_below_idx[idx_min_leaf][-1]
             else:
                 return None
         n_bins_before_pruning = self.n_bins

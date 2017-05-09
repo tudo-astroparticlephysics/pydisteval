@@ -30,9 +30,23 @@ def test_treebinning():
     assert len(leaves_test) == X_test.shape[0]
     hist_test = np.bincount(leaves_test)
     hist_train = np.bincount(leaves_train)
+
     assert len(hist_train) <= 10
     assert min(hist_train) >= 100
-
+    min_test = min(hist_test) + 1
+    n_below_threshold = sum(hist_test < min_test)
+    clf.prune(X_test, min_test)
+    leaves_test = clf.digitize(X_test)
+    assert len(leaves_test) == X_test.shape[0]
+    hist_test_pruned = np.bincount(leaves_test)
+    assert all(hist_test_pruned > min_test)
+    assert len(hist_test_pruned) == len(hist_test) - n_below_threshold
+    assert sum(hist_test_pruned) == sum(hist_test)
 
 if __name__ == '__main__':
+    import logging
+    logging.captureWarnings(True)
+    logging.basicConfig(
+        format='%(processName)-10s %(name)s %(levelname)-8s %(message)s',
+        level=logging.INFO)
     test_treebinning()
