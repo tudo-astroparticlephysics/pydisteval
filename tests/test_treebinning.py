@@ -43,33 +43,6 @@ def test_treebinning():
     assert sum(hist_test_pruned) == sum(hist_test)
 
     clf = TreeBinningSklearn(
-        regression=False,
-        max_features=None,
-        min_samples_split=2,
-        max_depth=None,
-        min_samples_leaf=100,
-        max_leaf_nodes=10,
-        random_state=1337)
-    clf.fit(X_train, y_train_binned)
-    score = clf.predict(X_test)
-    assert len(score) == X_test.shape[0]
-    leaves_test = clf.digitize(X_test)
-    leaves_train = clf.digitize(X_train)
-    assert len(leaves_test) == X_test.shape[0]
-    hist_test = np.bincount(leaves_test)
-    hist_train = np.bincount(leaves_train)
-
-    assert len(hist_train) <= 10
-    assert min(hist_train) >= 100
-    min_test = min(hist_test) + 1
-    clf.prune(X_test, min_test)
-    leaves_test = clf.digitize(X_test)
-    assert len(leaves_test) == X_test.shape[0]
-    hist_test_pruned = np.bincount(leaves_test)
-    assert all(hist_test_pruned >= min_test)
-    assert sum(hist_test_pruned) == sum(hist_test)
-
-    clf = TreeBinningSklearn(
         regression=True,
         max_features=None,
         min_samples_split=2,
