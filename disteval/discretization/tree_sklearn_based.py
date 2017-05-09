@@ -319,7 +319,7 @@ class TreeBinningSklearn(object):
             X,
             y,
             sample_weight=None,
-            uniform=True):
+            uniform=False):
         """Build a (boosted) classification/regression tree from the training
         set (X, y).
 
