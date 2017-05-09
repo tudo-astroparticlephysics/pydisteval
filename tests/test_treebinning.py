@@ -39,7 +39,8 @@ def test_treebinning():
     leaves_test = clf.digitize(X_test)
     assert len(leaves_test) == X_test.shape[0]
     hist_test_pruned = np.bincount(leaves_test)
-    assert all(hist_test_pruned > min_test)
+    assert all(hist_test_pruned >= min_test)
+
     assert len(hist_test_pruned) == len(hist_test) - n_below_threshold
     assert sum(hist_test_pruned) == sum(hist_test)
 
