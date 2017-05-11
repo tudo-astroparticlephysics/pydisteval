@@ -36,6 +36,22 @@ def __sample_uniform__(y, sample_weight=None):
     return rnd <= 1.
 
 
+def __get_parents__(tree):
+    parents = tree.children_left.copy()
+    for i, (c_l, c_r) in zip(tree.children_left, tree.children_right):
+        if c_l != -1:
+            parents[c_l] = i
+        if c_r != -1:
+            parents[c_r] = i
+    grand_parents = parents.copy()
+    for i, p in enumerate(parents):
+        if p != -1:
+            grand_parent_idx = parents[p]
+            if grand_parent_idx != -1:
+                grand_parents[i] = parents
+    return parents, grand_parents
+
+
 def get_family(tree):
     """Function to get the relations between nodes in a sklean tree.
 
@@ -60,29 +76,23 @@ def get_family(tree):
     """
     logger.debug('Creating array for tree relations.')
 
-    def walk_path(tree, idx, last_idx, node_list):
-        node_list.append([idx, last_idx])
-        l_child = tree.children_left[idx]
-        if l_child != -1:
-            node_list.extend(walk_path(tree, l_child, idx, node_list))
-        r_child = tree.children_right[idx]
-        if r_child != -1:
-            node_list.extend(walk_path(tree, r_child, idx, node_list))
-        return node_list
-
-    node_list = walk_path(tree, 0, -1, [])
-    parents = np.ones_like(tree.children_left, dtype=int) * -1
-    grand_parents = np.ones_like(tree.children_left, dtype=int) * -1
+    parents = np.ones_like(tree.children_left) * -1
+    grand_parents = np.ones_like(tree.children_left) * -1
     siblings = np.ones_like(tree.children_left, dtype=int) * -1
-    for own_idx, parent_idx in node_list:
-        parents[own_idx] = parent_idx
-        grand_parents[own_idx] = parents[parent_idx]
-    for parent_idx in parents:
-        if parent_idx != -1:
-            l_child_idx = tree.children_left[parent_idx]
-            r_child_idx = tree.children_right[parent_idx]
-            siblings[l_child_idx] = r_child_idx
-            siblings[r_child_idx] = l_child_idx
+    for i, (c_l, c_r) in enumerate(zip(tree.children_left,
+                                       tree.children_right)):
+        siblings[c_l] = c_r
+        siblings[c_r] = c_l
+        if c_l != -1:
+            parents[c_l] = i
+        if c_r != -1:
+            parents[c_r] = i
+        p = parents[i]
+        if p != -1:
+            grand_parent_idx = parents[p]
+            grand_parents[i] = grand_parent_idx
+        else:
+            grand_parents[i] = -1
     return parents, grand_parents, siblings
 
 
@@ -257,7 +267,7 @@ class TreeBinningSklearn(object):
         self.regression = regression
         if regression:
             logger.info('Initialized TreeBiningSklearn with a '
-                         'regression tree.')
+                        'regression tree.')
             self.tree = DecisionTreeRegressor(
                 max_depth=max_depth,
                 min_samples_split=min_samples_split,
@@ -285,7 +295,7 @@ class TreeBinningSklearn(object):
                 self.boosted = None
         else:
             logger.info('Initialized TreeBiningSklearn with a '
-                         'classification tree.')
+                        'classification tree.')
             self.tree = DecisionTreeClassifier(
                 max_depth=max_depth,
                 min_samples_split=min_samples_split,
@@ -513,15 +523,16 @@ class TreeBinningSklearn(object):
         tree = self.tree.tree_
 
         def find_withered_leaf():
+            logger.debug('Looking for leafs below the Threshold!')
             leafyfied = self.tree.apply(X)
             occureance = np.bincount(leafyfied, minlength=tree.node_count)
             is_leaf = tree.children_right == -1
             is_below = occureance < threshold
             is_leaf_below = np.logical_and(is_leaf, is_below)
             if any(is_leaf_below):
-                is_leaf_below_idx = np.where(is_leaf_below)
-                idx_min_leaf = np.argmin(occureance[is_leaf_below_idx])
-                return is_leaf_below_idx[idx_min_leaf][-1]
+                is_leaf_below_idx = np.where(is_leaf_below)[-1]
+                idx_min_leaf = np.argmin(occureance[is_leaf_below_idx[::-1]])
+                return is_leaf_below_idx[idx_min_leaf]
             else:
                 return None
         n_bins_before_pruning = self.n_bins

@@ -14,7 +14,6 @@ def test_run_comparison_plotter():
 
     plotter = ComparisonPlotter()
 
-
     plotter.add_element('AggarwalHisto', n_bins=50, alpha=[0.68, 0.9, 0.99])
     plotter.add_element('AggarwalRatio', zoomed=True)
     plotter.add_element('Normalization', normalize='test_livetime')
@@ -27,4 +26,3 @@ def test_run_comparison_plotter():
     fig.savefig('test.png')
     plotter.finish()
     os.remove('test.png')
-
