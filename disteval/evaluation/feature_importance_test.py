@@ -7,7 +7,9 @@ from scipy.stats import norm
 from ..basics.classifier_characteristics import ClassifierCharacteristics
 
 
-def feature_importance_mad(clf, alpha=0.05):
+def feature_importance_mad(clf,
+                           alpha=0.05,
+                           ignored_percentile=None):
     """This function fetches the feature importance values and runs a
     criteria using the median absolute deviation. If a feature
     importance difference to the median importance is greater than
@@ -72,15 +74,25 @@ def feature_importance_mad(clf, alpha=0.05):
         feature_importance_std = np.NaN
 
     threshold = norm.ppf(1 - alpha/2) * 1.4826  # see docstring
-    median_importance = np.median(feature_importance)
-    MAD = np.median(np.absolute(feature_importance - median_importance))
+    if ignored_percentile is not None:
+        ignore_threshold = np.percentile(feature_importance,
+                                         ignored_percentile * 100)
+        idx = feature_importance > ignore_threshold
+        feature_importance_MAD = feature_importance[idx]
+    else:
+        feature_importance_MAD = feature_importance
+    median_importance = np.median(feature_importance_MAD)
+    MAD = np.median(np.absolute(feature_importance_MAD - median_importance))
     diff = feature_importance - median_importance
     kept = np.logical_or(np.absolute(diff) < threshold * MAD,
                          feature_importance <= median_importance)
     return kept, feature_importance, feature_importance_std
 
 
-def feature_importance_mad_majority(clfs, ratio=0.9, alpha=0.10):
+def feature_importance_mad_majority(clfs,
+                                    ratio=0.9,
+                                    alpha=0.10,
+                                    ignored_percentile=None):
     """In this function a list of classifier must be provided. To decide
     if a feature is removed, for each classifier the function
     feature_importance_mad with the provided alpha is evaluated. And if
@@ -124,8 +136,10 @@ def feature_importance_mad_majority(clfs, ratio=0.9, alpha=0.10):
     kept_arr = []
     feature_importances = []
     for i, clf_i in enumerate(clfs):
-        kept, feature_importance, _ = feature_importance_mad(clf_i,
-                                                             alpha=alpha)
+        kept, feature_importance, _ = feature_importance_mad(
+            clf_i,
+            alpha=alpha,
+            ignored_percentile=ignored_percentile)
         kept_arr.append(kept)
         feature_importances.append(feature_importance)
     kept_arr = np.array(kept_arr)
