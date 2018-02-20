@@ -115,17 +115,17 @@ class ComparisonPlotter(object):
             pass
         else:
             raise TypeError('Invalid Type \'element\'!')
-        logger.debug('Adding {}! (Element)'.format(element.name))
+        logger.debug(u'Adding {}! (Element)'.format(element.name))
         element.register(self)
 
     def _register_calc_part(self, part):
         if part not in self._calc_parts:
-            logger.debug('\tRegistered {} (CalcPart)!'.format(part.name))
+            logger.debug(u'\tRegistered {} (CalcPart)!'.format(part.name))
             self._calc_parts.append(part)
 
     def _register_plot_part(self, part):
         if part not in self._plot_parts:
-            logger.debug('\tRegistered {} (PlotPart)!'.format(part.name))
+            logger.debug(u'\tRegistered {} (PlotPart)!'.format(part.name))
             self._plot_parts.append(part)
 
     def add_ref(self,
@@ -169,7 +169,7 @@ class ComparisonPlotter(object):
         if cmap is None:
             cmap = self.color_palette.get_cmap()
 
-        logger.debug('Added \'{}\' (Ref-Component)!'.format(label))
+        logger.debug(u'Added \'{}\' (Ref-Component)!'.format(label))
         self._components.append(Component(idx=idx,
                                           label=label,
                                           c_type='ref',
@@ -208,7 +208,7 @@ class ComparisonPlotter(object):
             is used.
 
         """
-        logger.debug('Added \'{}\' (RefPart-Component)!'.format(label))
+        logger.debug(u'Added \'{}\' (RefPart-Component)!'.format(label))
         self._components.append(Component(idx=len(self._components),
                                           label=label,
                                           c_type='ref_part',
@@ -251,7 +251,7 @@ class ComparisonPlotter(object):
             different confidence levels.
 
         """
-        logger.debug('Added \'{}\' (Test-Component)!'.format(label))
+        logger.debug(u'Added \'{}\' (Test-Component)!'.format(label))
         if color is None:
             color = self.color_palette.get_color()
         if cmap is None:
@@ -294,7 +294,7 @@ class ComparisonPlotter(object):
             is used.
 
         """
-        logger.debug('Added \'{}\' (TestPart-Component)!'.format(label))
+        logger.debug(u'Added \'{}\' (TestPart-Component)!'.format(label))
         self._components.append(Component(idx=len(self._components),
                                           label=label,
                                           c_type='test_part',
@@ -333,8 +333,8 @@ class ComparisonPlotter(object):
             A simple object with all the results of the CalcParts as
             the attribute.
         """
-        logger.debug('Start Draw Process!')
-        logger.debug('===================')
+        logger.debug(u'Start Draw Process!')
+        logger.debug(u'===================')
         result_tray = ResultTray()
         result_tray.add(x_label, 'x_label')
         result_tray = self._calc(result_tray)
@@ -343,7 +343,7 @@ class ComparisonPlotter(object):
         result_tray.add(self._fig, 'fig')
         total_rows = sum([part_i.get_rows() for part_i in self._plot_parts])
         row_pointer = total_rows
-        logger.debug('Starting Plotting...')
+        logger.debug(u'Starting Plotting...')
         ax_dict = {}
         for i, part_i in enumerate(self._plot_parts):
             part_rows = part_i.get_rows()
@@ -363,11 +363,11 @@ class ComparisonPlotter(object):
                 result_tray = part_i.execute(result_tray, comp_i)
             ax_dict[part_i.name] = part_i.get_ax()
             part_i.finish(result_tray)
-        logger.debug('Finished!')
+        logger.debug(u'Finished!')
         return self._fig, ax_dict, result_tray
 
     def _calc(self, result_tray):
-        logger.debug('Starting Calculating...')
+        logger.debug(u'Starting Calculating...')
         n_components = len(self._components)
         self._calc_parts = sorted(self._calc_parts)
         self._components = sorted(self._components)
@@ -394,7 +394,7 @@ class ComparisonPlotter(object):
             for comp_i in self._components:
                 result_tray = part_i.execute(result_tray, comp_i)
             part_i.finish(result_tray)
-        logger.debug('Finished!')
+        logger.debug(u'Finished!')
         return result_tray
 
     def finish(self):
@@ -403,7 +403,7 @@ class ComparisonPlotter(object):
         It resets the color cycle, removes the components and closes
         the figure. The all added elements are kept.
         """
-        logger.debug('Finishing: resetting color cycle, component and figure!')
+        logger.debug(u'Finishing: resetting color cycle, component and figure!')
         if self._fig is not None:
             plt.close(self._fig)
             self._fig = None
@@ -423,7 +423,7 @@ class ComparisonPlotter(object):
         title : str, optional
             Title of the plot.
         """
-        logger.debug('Reset: resetting parts and components!')
+        logger.debug(u'Reset: resetting parts and components!')
         self.finish()
         self.title = title
         self._plot_parts = []

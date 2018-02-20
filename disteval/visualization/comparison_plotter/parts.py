@@ -14,7 +14,7 @@ class CalcBinning(CalcPart):
     name = 'CalcBinning'
     level = 0
 
-    def __init__(self, n_bins=50, binning_dict=None, check_all=True):
+    def __init__(self, n_bins=50, binning_dict=None, check_all=False):
         super(CalcBinning, self).__init__()
         self.n_bins = n_bins
         self.check_all = check_all
@@ -482,6 +482,7 @@ class PlotHistAggerwal(PlotPart):
                        handler_map=le.handler_mapper,
                        loc='best',
                        prop={'size': 11})
+        self.ax.set_ylim([1e-4, 3e3])
         self.leg_labels = []
         self.leg_entries = []
 
@@ -504,7 +505,7 @@ class PlotRatioAggerwal(PlotPart):
         self.y_min = min(y_min_limit, y_min_ratio)
 
     def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1):
-        self.logger.debug('\t{}: Setting up Axes!'.format(self.name))
+        self.logger.debug(u'\t{}: Setting up Axes!'.format(self.name))
         if idx == 0:
             self.is_top = True
             top_offset = self.large_offset

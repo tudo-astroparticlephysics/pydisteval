@@ -15,17 +15,17 @@ class Part(object):
     def execute(self, result_tray, component):
         if self.n_executions == 0:
             result_tray = self.start(result_tray)
-        self.logger.debug('\t{}: Executing {}!'.format(self.name,
+        self.logger.debug(u'\t{}: Executing {}!'.format(self.name,
                                                        component.idx))
         self.n_executions += 1
         return result_tray
 
     def start(self, result_tray):
-        self.logger.debug('\t{}: Starting!'.format(self.name))
+        self.logger.debug(u'\t{}: Starting!'.format(self.name))
         return result_tray
 
     def finish(self, result_tray=None):
-        self.logger.debug('\t{}: Finishing!'.format(self.name))
+        self.logger.debug(u'\t{}: Finishing!'.format(self.name))
         self.n_executions = 0
         return result_tray
 
@@ -56,7 +56,7 @@ class PlotPart(Part):
         return result_tray
 
     def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1):
-        self.logger.debug('\t{}: Setting up Axes!'.format(self.name))
+        self.logger.debug(u'\t{}: Setting up Axes!'.format(self.name))
 
         if idx == 0:
             self.is_top = True

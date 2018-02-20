@@ -11,8 +11,11 @@ class ClassicHisto(Element):
                  y_label='Frequence',
                  log_y=False,
                  binning_dict=None):
+        print(binning_dict)
         super(ClassicHisto, self).__init__()
-        self.calc_components.append(parts.CalcBinning(n_bins=n_bins))
+        self.calc_components.append(parts.CalcBinning(
+            n_bins=n_bins,
+            binning_dict=binning_dict))
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcClassicHistoErrors())
         plot_hist = parts.PlotHistClassic(log_y=log_y,
