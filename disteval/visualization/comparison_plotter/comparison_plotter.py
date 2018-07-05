@@ -17,6 +17,8 @@ from .base_classes import ResultTray, Element
 
 REGISTERED_ELEMENTS = {'aggarwalhisto': elements.AggarwalHisto,
                        'aggarwalratio': elements.AggarwalRatio,
+                       'limitedmchisto': elements.LimitedMCHisto,
+                       'limitedmcratio': elements.LimitedMCRatio,
                        'classichisto': elements.ClassicHisto,
                        'classicratio': elements.ClassicRatio,
                        'normalization': elements.Normalization}
