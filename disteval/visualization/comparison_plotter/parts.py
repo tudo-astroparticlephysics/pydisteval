@@ -167,7 +167,7 @@ class CalcLimitedMCHistoErrors(CalcPart):
 
                 k_range, pdf = calc_funcs.evaluate_normalized_likelihood(
                     llh_func=llh_func,
-                    coverage=0.9999,
+                    coverage=0.99999999,
                     first_guess=first_guess,
                     **llh_kwargs)
 
@@ -433,7 +433,7 @@ class PlotHistClassic(PlotPart):
     def start(self, result_tray):
         result_tray = super(PlotHistClassic, self).start(result_tray)
         if self.log_y:
-            self.ax.set_yscale('log', clip=True)
+            self.ax.set_yscale('log', nonposy='clip')
         self.ax.set_ylabel(self.y_label)
         return result_tray
 
@@ -577,7 +577,7 @@ class PlotHistAggerwal(PlotPart):
     def start(self, result_tray):
         result_tray = super(PlotHistAggerwal, self).start(result_tray)
         if self.log_y:
-            self.ax.set_yscale('log', clip=True)
+            self.ax.set_yscale('log', nonposy='clip')
         self.ax.set_ylabel(self.y_label)
         return result_tray
 
