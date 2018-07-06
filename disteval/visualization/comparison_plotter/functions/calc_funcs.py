@@ -283,9 +283,18 @@ def __calc_p_alpha_pdf__(pdfs, ks, mu, k, upper=True):
         cdf = np.cumsum(pdf)
         if is_finite[i]:
             mu_idx = np.where(ksi == int(mu[i]))[0]
-            a_ref = cdf[mu_idx]
+            if len(mu_idx) == 0:
+                a_ref = np.nan
+            else:
+                a_ref = cdf[mu_idx]
             k_idx = np.where(ksi == int(k[i]))[0]
-            a_k = cdf[k_idx]
+            if len(k_idx) == 0:
+                if upper:
+                    a_k = 1
+                else:
+                    a_k = 0
+            else:
+                a_k = cdf[k_idx]
             if upper:
                 if 1 - a_k == 0.:
                     limit[i] = np.inf
