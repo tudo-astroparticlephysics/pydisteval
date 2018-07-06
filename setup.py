@@ -50,7 +50,8 @@ setup(
         'tables',
         'h5py',
         'scipy',
-        'futures'],
+        'futures',
+        'tqdm'],
 
     entry_points={
         'console_scripts': ['fact_example=examples.fact_example.py:main'],
