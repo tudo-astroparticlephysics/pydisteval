@@ -56,5 +56,5 @@ setup(
         'console_scripts': ['fact_example=examples.fact_example.py:main'],
     },
     setup_requires=['pytest-runner'],
-    tests_require=['pytest>=3.1.0', 'setuptools>=34.4.1'],
+    tests_require=['pytest'],
 )
