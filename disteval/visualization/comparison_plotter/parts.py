@@ -7,7 +7,10 @@ from matplotlib.gridspec import GridSpec
 from .base_classes import CalcPart, PlotPart
 from .functions import plot_funcs
 from .functions import calc_funcs
+from .functions import likelihoods
 from .functions import legend_entries as le
+
+from tqdm import tqdm
 
 
 class CalcBinning(CalcPart):
@@ -32,14 +35,16 @@ class CalcBinning(CalcPart):
         if not hasattr(result_tray, 'binning'):
             min_x = np.min(component.X)
             max_x = np.max(component.X)
-            binning = np.linspace(min_x, max_x, self.n_bins + 1)
+            upper_x = max_x + (max_x - min_x) / self.n_bins
+            binning = np.linspace(min_x, upper_x, self.n_bins + 2)
             result_tray.add(binning, 'binning')
         elif self.check_all:
             current_min_x = result_tray.binning[0]
             current_max_x = result_tray.binning[-1]
             min_x = min(current_min_x, np.min(component.X))
             max_x = max(current_max_x, np.max(component.X))
-            binning = np.linspace(min_x, max_x, self.n_bins + 1)
+            upper_x = max_x + (max_x - min_x) / self.n_bins
+            binning = np.linspace(min_x, upper_x, self.n_bins + 2)
             result_tray.add(binning, 'binning')
         return result_tray
 
@@ -65,22 +70,142 @@ class CalcHistogram(CalcPart):
         if not hasattr(result_tray, 'sum_w'):
             sum_w = np.zeros((n_bins, result_tray.n_components))
             sum_w_squared = np.zeros_like(sum_w)
+            k_mc = np.zeros((n_bins, result_tray.n_components))
         else:
             sum_w = result_tray.sum_w
             sum_w_squared = result_tray.sum_w_squared
+            k_mc = result_tray.k_mc
 
         digitized = np.digitize(X, bins=binning)
         sum_w[:, idx] = np.bincount(digitized,
                                     weights=weights,
                                     minlength=n_bins)
+        k_mc[:, idx] = np.bincount(digitized,
+                                   minlength=n_bins)
         if weights is not None:
+            w_list = []
+            for bin_i in range(len(binning)+1):
+                w_list.append(weights[digitized == bin_i])
             sum_w_squared[:, idx] = np.bincount(digitized,
                                                 weights=weights**2,
                                                 minlength=n_bins)
         else:
             sum_w_squared[:, idx] = sum_w[:, idx]
+            w_list = []
         result_tray.add(sum_w, 'sum_w')
         result_tray.add(sum_w_squared, 'sum_w_squared')
+        result_tray.add(k_mc, 'k_mc')
+        result_tray.add(w_list, 'w_list')
+        return result_tray
+
+
+class CalcLimitedMCHistoErrors(CalcPart):
+    name = 'CalcLimitedMCHistoErrors'
+
+    def __init__(self, alpha, likelihood):
+        super(CalcLimitedMCHistoErrors, self).__init__()
+        self.alpha = alpha
+        self.likelihood = likelihood.lower()
+
+    def start(self, result_tray):
+        result_tray = super(CalcLimitedMCHistoErrors, self).start(result_tray)
+        result_tray.add(self.alpha, 'alpha')
+        return result_tray
+
+    def execute(self, result_tray, component):
+        result_tray = super(CalcLimitedMCHistoErrors, self).execute(
+            result_tray, component)
+        if component.c_type == 'ref':
+            scale_factor = result_tray.test_livetime / component.livetime
+
+            if not (hasattr(result_tray, 'sum_w') and
+                    hasattr(result_tray, 'k_mc')):
+                raise RuntimeError('No \'sum_w\' in the result tray.'
+                                   ' run \'CalcHistogram\' first!')
+            else:
+                sum_w = result_tray.sum_w[:, component.idx] * scale_factor
+                sum_w2 = result_tray.sum_w_squared[:, component.idx] * \
+                    scale_factor**2
+                k_mc = result_tray.k_mc[:, component.idx]
+                w_list = result_tray.w_list
+
+            mus = sum_w
+
+            pdfs = []
+            ks = []
+
+            for i, mu in tqdm(enumerate(mus)):
+                if self.likelihood == 'say':
+                    llh_func = likelihoods.SAY_likelihood
+                    first_guess = mu
+                    llh_kwargs = {
+                        'mu': mu,
+                        'w2_sum': sum_w2[i]
+                    }
+
+                elif self.likelihood == 'thorsten_general':
+                    llh_func = likelihoods.poisson_general_weights
+                    first_guess = mu
+                    llh_kwargs = {
+                        'weights': w_list[i] * scale_factor
+                    }
+
+                elif self.likelihood == 'thorsten_equal':
+                    avg_w = sum_w / k_mc
+                    llh_func = likelihoods.poisson_equal_weights
+                    first_guess = mu
+                    llh_kwargs = {
+                        'k_mc': k_mc,
+                        'avgweights': avg_w
+                    }
+
+                else:
+                    raise NotImplementedError(
+                        'Chosen likelihood is not implemented. ' +
+                        'Choose either \'say\', \'thorsten_general\'' +
+                        'or \'thorsten_equal\'!')
+
+                k_range, pdf = calc_funcs.evaluate_normalized_likelihood(
+                    llh_func=llh_func,
+                    coverage=0.99999999,
+                    first_guess=first_guess,
+                    **llh_kwargs)
+
+                ks.append(k_range)
+
+                # Example on how to use DimaLlh, which can't be treated the
+                # same way because it is unnormalized
+                # lower = np.maximum(0, mu - 200)
+                # upper = mu + 200
+                # k_range = np.arange(int(lower), int(upper))
+                # ks.append(k_range)
+                # pdf = []
+
+                # for k in k_range:
+                #     pdf.append(np.exp(
+                #         likelihoods.poisson_general_weights_chirkin_13(
+                #             np.array([k]),
+                #             w_list[i] * scale_factor,
+                #             [np.ones(len(w_list[i])) == 1])))
+
+                # pdf = np.array(pdf) / np.sum(pdf)
+
+                pdfs.append(pdf)
+
+            rel_std = np.empty((len(mus), len(self.alpha), 2))
+            rel_std[:] = np.nan
+
+            lower, upper = calc_funcs.aggarwal_limits_pdf(pdfs,
+                                                          ks,
+                                                          alpha=self.alpha)
+
+            mask = mus > 0
+            for i in range(len(self.alpha)):
+                rel_std[mask, i, 0] = lower[mask, i] / mus[mask]
+                rel_std[mask, i, 1] = upper[mask, i] / mus[mask]
+            result_tray.add(rel_std, 'rel_std_aggarwal')
+            result_tray.add(pdfs, 'pdfs')
+            result_tray.add(ks, 'ks')
         return result_tray
 
 
@@ -119,6 +244,67 @@ class CalcAggarwalHistoErrors(CalcPart):
                 rel_std[mask, i, 0] = lower[mask, i] / mu[mask]
                 rel_std[mask, i, 1] = upper[mask, i] / mu[mask]
             result_tray.add(rel_std, 'rel_std_aggarwal')
+        return result_tray
+
+
+class CalcLimitedMCRatios(CalcPart):
+    name = 'CalcLimitedMCRatios'
+    level = 3
+
+    def execute(self, result_tray, component):
+        result_tray = super(CalcLimitedMCRatios, self).execute(
+            result_tray, component)
+        sum_w = result_tray.sum_w
+        mu = sum_w[:, result_tray.ref_idx]
+        pdfs = result_tray.pdfs
+        ks = result_tray.ks
+        if component.c_type == 'ref':
+            if not hasattr(result_tray, 'rel_std_aggarwal'):
+                raise RuntimeError('No \'rel_std_aggarwal\' in the result tray'
+                                   '. run \'CalcAggarwalHistoErrors\' first!')
+            else:
+                rel_std = result_tray.rel_std_aggarwal
+            y_mins_limit = [0, 0]
+            limits = np.zeros_like(rel_std)
+            limits = calc_funcs.calc_p_alpha_limits_pdf(
+                pdfs=pdfs,
+                ks=ks,
+                mu=mu,
+                rel_std=rel_std)
+            limits_mapped = np.zeros_like(limits)
+
+            limits_mapped[:, :, 0], y_min = calc_funcs.map_aggarwal_limits(
+                limits[:, :, 0],
+                y_0=1.,
+                upper=False)
+            y_mins_limit[0] = y_min
+
+            limits_mapped[:, :, 1], y_min = calc_funcs.map_aggarwal_limits(
+                limits[:, :, 1],
+                y_0=1.,
+                upper=True)
+            y_mins_limit[1] = y_min
+
+            result_tray.add(y_mins_limit, 'y_mins_limit')
+            result_tray.add(limits_mapped, 'limits_mapped')
+        if component.c_type == 'test':
+            k = sum_w[:, component.idx]
+            ratio = calc_funcs.calc_p_alpha_ratio_pdf(pdfs, ks, mu, k)
+            upper = k > mu
+            below = ~upper
+            ratio_mapped = np.array(ratio)
+            ratio_mapped[below], y_below = calc_funcs.map_aggarwal_ratio(
+                ratio[below],
+                y_0=1.,
+                upper=False)
+            ratio_mapped[upper], y_upper = calc_funcs.map_aggarwal_ratio(
+                ratio[upper],
+                y_0=1.,
+                upper=True)
+
+            result_tray.add([y_below, y_upper], 'y_mins_ratio')
+            result_tray.add(ratio_mapped, 'ratio_mapped')
+            result_tray.add(upper, 'is_above')
         return result_tray
 
 
@@ -247,7 +433,7 @@ class PlotHistClassic(PlotPart):
     def start(self, result_tray):
         result_tray = super(PlotHistClassic, self).start(result_tray)
         if self.log_y:
-            self.ax.set_yscale('log', clip=True)
+            self.ax.set_yscale('log', nonposy='clip')
         self.ax.set_ylabel(self.y_label)
         return result_tray
 
@@ -368,6 +554,7 @@ class PlotRatioClassic(PlotPart):
         self.leg_labels = []
         self.leg_entries = []
 
+
 class PlotHistAggerwal(PlotPart):
     name = 'PlotHistAggerwal'
     rows = 5
@@ -390,7 +577,7 @@ class PlotHistAggerwal(PlotPart):
     def start(self, result_tray):
         result_tray = super(PlotHistAggerwal, self).start(result_tray)
         if self.log_y:
-            self.ax.set_yscale('log', clip=True)
+            self.ax.set_yscale('log', nonposy='clip')
         self.ax.set_ylabel(self.y_label)
         return result_tray
 
@@ -461,6 +648,7 @@ class PlotHistAggerwal(PlotPart):
             for i in range(abs_std.shape[1]):
                 for j in range(abs_std.shape[2]):
                     abs_std[:, i, j] = rel_std[:, i, j] * y_vals
+
             leg_objs = plot_funcs.plot_uncertainties(
                 ax=self.ax,
                 bin_edges=result_tray.binning,
@@ -482,7 +670,6 @@ class PlotHistAggerwal(PlotPart):
                        handler_map=le.handler_mapper,
                        loc='best',
                        prop={'size': 11})
-        self.ax.set_ylim([1e-4, 3e3])
         self.leg_labels = []
         self.leg_entries = []
 
