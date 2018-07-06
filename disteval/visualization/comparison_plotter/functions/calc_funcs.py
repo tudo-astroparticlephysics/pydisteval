@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.stats.distributions as sc_dist
-import scipy
 from itertools import compress
 
 
