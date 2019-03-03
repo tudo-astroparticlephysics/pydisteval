@@ -103,6 +103,7 @@ def map_aggarwal_ratio(y_values, y_0=1., upper=True):
     is_nan = np.isnan(flattened_y)
     is_pos_inf = np.isposinf(flattened_y)
     is_neg_inf = np.isneginf(flattened_y)
+    got_divided_by_zero = flattened_y == 1.
     if upper:
         transformed_values[is_nan] = np.nan
         transformed_values[is_pos_inf] = np.inf
@@ -112,6 +113,7 @@ def map_aggarwal_ratio(y_values, y_0=1., upper=True):
         transformed_values[is_nan] = np.nan
         transformed_values[is_pos_inf] = np.inf
         transformed_values[is_neg_inf] = -np.inf
+    transformed_values[got_divided_by_zero] = 0
     transformed_values = transformed_values.reshape(y_values.shape)
     return transformed_values, y_min
 
