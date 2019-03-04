@@ -13,7 +13,8 @@ before_install:
   - export PATH=/home/travis/miniconda/bin:$PATH
 
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy==1.10.0 scipy matplotlib pip pymongo pyflakes pytest setuptools
+  - conda update --yes conda
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib pip pymongo pyflakes pytest setuptools
   - pip install .
 
 script:
