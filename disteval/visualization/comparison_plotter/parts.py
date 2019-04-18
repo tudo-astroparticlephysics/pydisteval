@@ -657,7 +657,7 @@ class PlotHistAggerwal(PlotPart):
                 cmap=component.cmap)
             labels = [component.label]
             for a_i in result_tray.alpha:
-                labels.append('      %.1f%% Uncert.' % (a_i * 100.))
+                labels.append('{:.1f}\% Interval'.format(a_i * 100.))
         return leg_objs, labels
 
     def finish(self, result_tray):
@@ -764,6 +764,11 @@ class PlotRatioAggerwal(PlotPart):
             y_mins_ratio[1],
             self.y_min)
 
+        if not self.zoomed:
+            annotation = None
+        else:
+            annotation = 'Ratio: Smallest Value'
+
         self.y_min_scaled = self.__plot_test_marker__(
             fig=result_tray.fig,
             ax=self.ax,
@@ -774,7 +779,7 @@ class PlotRatioAggerwal(PlotPart):
             facecolor=component.color,
             edgecolor='k',
             alpha=1.,
-            annotation='Ratio: Smallest Value')
+            annotation=annotation)
         if self.zoomed:
             ratio_zoomed = np.array(ratio_mapped)
             ratio_zoomed[~is_above] = calc_funcs.rescale_ratio(
@@ -860,7 +865,7 @@ class PlotRatioAggerwal(PlotPart):
                              facecolor,
                              edgecolor,
                              alpha,
-                             annotation):
+                             annotation=None):
         plot_funcs.plot_test_ratio_mapped(fig=fig,
                                           ax=ax,
                                           bin_edges=binning,
@@ -877,12 +882,13 @@ class PlotRatioAggerwal(PlotPart):
         ax.set_yticks(m_p, minor=True)
         ax.set_ylabel(self.y_label)
         ax.yaxis.grid(True)
-        ax.text(binning[1],
-                0.90,
-                annotation,
-                horizontalalignment='left',
-                verticalalignment='top',
-                fontsize=12,
-                color='0.4',
-                alpha=0.7)
+        if annotation is not None:
+            ax.text(binning[1],
+                    0.90,
+                    annotation,
+                    horizontalalignment='left',
+                    verticalalignment='top',
+                    fontsize=12,
+                    color='0.4',
+                    alpha=0.7)
         return y_min

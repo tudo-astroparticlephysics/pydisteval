@@ -28,7 +28,7 @@ class ClassicRatio(Element):
 
     def __init__(self,
                  n_bins=50,
-                 y_label=r'$\frac{\mathregular{Test - Ref}}{\sigma}$',
+                 y_label=r'$\frac{\mathrm{Test - Ref}}{\sigma}$',
                  y_lims=None,
                  binning_dict=None):
         super(ClassicRatio, self).__init__()

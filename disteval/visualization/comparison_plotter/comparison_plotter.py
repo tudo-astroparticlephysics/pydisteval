@@ -342,6 +342,8 @@ class ComparisonPlotter(object):
         result_tray = self._calc(result_tray)
         if not isinstance(fig, plt.Figure):
             self._fig = plt.figure(figsize=figsize)
+        else:
+            self._fig = fig
         result_tray.add(self._fig, 'fig')
         total_rows = sum([part_i.get_rows() for part_i in self._plot_parts])
         row_pointer = total_rows

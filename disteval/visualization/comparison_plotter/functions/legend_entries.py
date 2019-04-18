@@ -89,7 +89,7 @@ class uncert_handler_single(object):
         x0, y0 = handlebox.xdescent, handlebox.ydescent
         width, height = handlebox.width, handlebox.height
         x0 = x0 + 0.5 * width
-        rec = mpatches.Rectangle([x0 + width, y0], 0.5 * width,
+        rec = mpatches.Rectangle([x0, y0], 0.5 * width,
                                  height,
                                  facecolor=orig_handle.color,
                                  edgecolor=orig_handle.color,
