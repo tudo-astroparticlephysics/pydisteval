@@ -347,7 +347,7 @@ def generate_ticks_for_aggarwal_ratio(y_0, y_min, max_ticks_per_side=5):
     mayor_tick_counter = 0
     for i, [p, l] in enumerate(zip(tick_pos_mapped, tick_pos)):
         lab = 10**l
-        lab = ur'$10^{\mathrm{:.0f}}$'.format(l)
+        lab = ur'$10^{{\mathrm{{{:.0f}}}}}$'.format(l)
         if i == 0:
             mayor_ticks_labels.append(lab)
             mayor_ticks.append(0)
