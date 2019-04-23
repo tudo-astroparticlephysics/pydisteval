@@ -691,8 +691,12 @@ class PlotRatioAggerwal(PlotPart):
         y_min_ratio = np.min(result_tray.y_mins_ratio)
         self.y_min = min(y_min_limit, y_min_ratio)
 
-    def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1):
+    def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1,
+               medium_offsets_only=False):
         self.logger.debug(u'\t{}: Setting up Axes!'.format(self.name))
+        self.is_top = False
+        self.is_bot = False
+
         if idx == 0:
             self.is_top = True
             top_offset = self.large_offset
@@ -705,6 +709,13 @@ class PlotRatioAggerwal(PlotPart):
         else:
             self.is_bot = False
             bot_offset = self.small_offset
+
+        if medium_offsets_only:
+            if self.is_top:
+                top_offset = self.medium_offset
+            if self.is_bot:
+                bot_offset = self.medium_offset
+
         if self.zoomed:
             self.gs = GridSpec(2, 1,
                                left=x0 + 0.1,

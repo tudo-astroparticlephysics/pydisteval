@@ -16,7 +16,7 @@ class Part(object):
         if self.n_executions == 0:
             result_tray = self.start(result_tray)
         self.logger.debug(u'\t{}: Executing {}!'.format(self.name,
-                                                       component.idx))
+                                                        component.idx))
         self.n_executions += 1
         return result_tray
 
@@ -47,6 +47,7 @@ class PlotPart(Part):
     rows = 1
     large_offset = 0.08
     small_offset = 0.005
+    medium_offset = 0.04
 
     def init(self):
         self.ax = None
@@ -55,8 +56,11 @@ class PlotPart(Part):
         super(PlotPart, self).execute(result_tray, component)
         return result_tray
 
-    def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1):
+    def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1,
+               medium_offsets_only=False):
         self.logger.debug(u'\t{}: Setting up Axes!'.format(self.name))
+        self.is_bot = False
+        self.is_top = False
 
         if idx == 0:
             self.is_top = True
@@ -70,6 +74,13 @@ class PlotPart(Part):
         else:
             self.is_bot = False
             bot_offset = self.small_offset
+
+        if medium_offsets_only:
+            if self.is_top:
+                top_offset = self.medium_offset
+            if self.is_bot:
+                bot_offset = self.medium_offset
+
         self.gs = GridSpec(1, 1,
                            left=x0 + 0.1,
                            right=x1 - 0.1,
