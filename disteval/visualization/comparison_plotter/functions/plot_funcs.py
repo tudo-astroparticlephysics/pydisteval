@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 import numpy as np
 from matplotlib import pyplot as plt
-import matplotlib.patches as mpatches
 from matplotlib.colors import ColorConverter
 import matplotlib.transforms as transforms
 from colorsys import rgb_to_hls, hls_to_rgb
