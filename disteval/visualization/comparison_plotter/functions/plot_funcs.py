@@ -2,8 +2,8 @@ from __future__ import unicode_literals
 
 import numpy as np
 from matplotlib import pyplot as plt
-import matplotlib.patches as mpatches
 from matplotlib.colors import ColorConverter
+import matplotlib.transforms as transforms
 from colorsys import rgb_to_hls, hls_to_rgb
 
 from .calc_funcs import map_aggarwal_ratio, rescale_limit
@@ -34,37 +34,39 @@ def plot_inf_marker(fig,
                     markeredgecolor='k',
                     markerfacecolor='none',
                     bot=True,
-                    alpha=1.):
-    patches = []
-    radius = 0.005
+                    alpha=1.,
+                    rel_marker_size=0.007):
+
+    # compute marker size
+    pixel_width, pixel_height = fig.canvas.get_width_height()
+    markersize = pixel_height * rel_marker_size
+
+    # get coordinate transformation
+    trans = transforms.blended_transform_factory(
+              ax.transData, fig.transFigure)
+
     bbox = ax.get_position()
-    x_0 = bbox.x0
-    width = bbox.x1 - bbox.x0
     if bot:
-        y0 = bbox.y0 + radius
-        orientation = np.pi
+        y0 = bbox.y0 + rel_marker_size
+        marker = 'v'
     else:
-        y0 = bbox.y1 - radius
-        orientation = 0
+        y0 = bbox.y1 - rel_marker_size
+        marker = '^'
+
     bin_center = (binning[1:] + binning[:-1]) / 2
-    binning_width = binning[-1] - binning[0]
-    bin_0 = binning[0]
+
     for bin_i, place in zip(bin_center, place_marker):
         if place:
-            x_i = ((bin_i - bin_0) / binning_width * width) + x_0
-            patches.append(mpatches.RegularPolygon(
-                [x_i, y0],
-                3,
-                radius=radius,
-                orientation=orientation,
-                facecolor=markerfacecolor,
-                edgecolor=markeredgecolor,
-                transform=fig.transFigure,
-                figure=fig,
-                linewidth=1.,
-                zorder=MAIN_ZORDER + 1,
-                alpha=alpha))
-    fig.patches.extend(patches)
+            ax.plot([bin_i, ], [y0, ],
+                    transform=trans,
+                    marker=marker,
+                    markerfacecolor=markerfacecolor,
+                    markeredgecolor=markeredgecolor,
+                    markersize=markersize,
+                    figure=fig,
+                    linewidth=1.,
+                    zorder=MAIN_ZORDER + 1,
+                    alpha=alpha)
 
 
 def plot_finite_marker(ax, x, y, facecolor, edgecolor, alpha):
