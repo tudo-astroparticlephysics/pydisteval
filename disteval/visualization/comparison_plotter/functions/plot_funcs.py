@@ -36,7 +36,7 @@ def plot_inf_marker(fig,
                     markerfacecolor='none',
                     bot=True,
                     alpha=1.,
-                    rel_marker_size=0.009):
+                    rel_marker_size=0.007):
 
     # compute marker size
     pixel_width, pixel_height = fig.canvas.get_width_height()
