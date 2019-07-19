@@ -28,8 +28,8 @@ logger = logging.getLogger("ComparisonPlotter ")
 class ComparisonPlotter(object):
     """Class to build up the plot layout and produce the plots!
 
-    All parts of the plots are in some way histograms, so continous
-    datapoints discretizied in bins. For those bins a poisson
+    All parts of the plots are in some way histograms, so continuous
+    datapoints discretized in bins. For those bins a Poisson
     distribution is assumed.
 
     The general concept is that the plot layout is build up with
@@ -41,7 +41,7 @@ class ComparisonPlotter(object):
 
 
     After the Layout is created, you have to add components. Components
-    mus have atleast a name and the data you want to visualize. They
+    mus have at least a name and the data you want to visualize. They
     two mandatory components are the 'test' and the 'ref' components.
     It is not possible to add more than one of those type of components.
     If one of the components consists of multiple contributions that
@@ -105,7 +105,7 @@ class ComparisonPlotter(object):
         element :  :obj:`comparison_plotter.base_classes.Element`
             The first parameter.
         **kwarg
-            Keyword arguments of the element. See element documentatioin.
+            Keyword arguments of the element. See element documentation.
 
         """
         if isinstance(element, Element):
@@ -151,7 +151,7 @@ class ComparisonPlotter(object):
             different livetime on each other. For this purpose only
             the relative difference between the livetimes is needed.
             So if you have datasets with the same livetime just set
-            them all to 1 respectivly use the default.
+            them all to 1 respectively use the default.
         weights : array_like
             Array of weights. Must be of the same length like X.
         color : matplotlib compatible color code, optional
@@ -201,7 +201,7 @@ class ComparisonPlotter(object):
             different livetime on each other. For this purpose only
             the relative difference between the livetimes is needed.
             So if you have datasets with the same livetime just set
-            them all to 1 respectivly use the default.
+            them all to 1 respectively use the default.
         weights : array_like
             Array of weights. Must be of the same length like X.
         color : matplotlib compatible color code, optional
@@ -240,7 +240,7 @@ class ComparisonPlotter(object):
             different livetime on each other. For this purpose only
             the relative difference between the livetimes is needed.
             So if you have datasets with the same livetime just set
-            them all to 1 respectivly use the default.
+            them all to 1 respectively use the default.
         weights : array_like
             Array of weights. Must be of the same length like X.
         color : matplotlib compatible color code, optional
@@ -287,7 +287,7 @@ class ComparisonPlotter(object):
             different livetime on each other. For this purpose only
             the relative difference between the livetimes is needed.
             So if you have datasets with the same livetime just set
-            them all to 1 respectivly use the default.
+            them all to 1 respectively use the default.
         weights : array_like
             Array of weights. Must be of the same length like X.
         color : matplotlib compatible color code, optional
@@ -309,7 +309,7 @@ class ComparisonPlotter(object):
         """Method to start the actual draw process.
 
         In a first step all CalcParts are called for each component.
-        In a second step the PlotParts are called for each compnent.
+        In a second step the PlotParts are called for each component.
 
         Parameters
         ----------
@@ -376,7 +376,7 @@ class ComparisonPlotter(object):
         """Method to start the actual draw process.
 
         In a first step all CalcParts are called for each component.
-        In a second step the PlotParts are called for each compnent.
+        In a second step the PlotParts are called for each component.
 
         Parameters
         ----------
