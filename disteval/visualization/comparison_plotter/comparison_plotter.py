@@ -28,8 +28,8 @@ logger = logging.getLogger("ComparisonPlotter ")
 class ComparisonPlotter(object):
     """Class to build up the plot layout and produce the plots!
 
-    All parts of the plots are in some way histograms, so continous
-    datapoints discretizied in bins. For those bins a poisson
+    All parts of the plots are in some way histograms, so continuous
+    datapoints discretized in bins. For those bins a Poisson
     distribution is assumed.
 
     The general concept is that the plot layout is build up with
@@ -41,7 +41,7 @@ class ComparisonPlotter(object):
 
 
     After the Layout is created, you have to add components. Components
-    mus have atleast a name and the data you want to visualize. They
+    mus have at least a name and the data you want to visualize. They
     two mandatory components are the 'test' and the 'ref' components.
     It is not possible to add more than one of those type of components.
     If one of the components consists of multiple contributions that
@@ -105,7 +105,7 @@ class ComparisonPlotter(object):
         element :  :obj:`comparison_plotter.base_classes.Element`
             The first parameter.
         **kwarg
-            Keyword arguments of the element. See element documentatioin.
+            Keyword arguments of the element. See element documentation.
 
         """
         if isinstance(element, Element):
@@ -151,7 +151,7 @@ class ComparisonPlotter(object):
             different livetime on each other. For this purpose only
             the relative difference between the livetimes is needed.
             So if you have datasets with the same livetime just set
-            them all to 1 respectivly use the default.
+            them all to 1 respectively use the default.
         weights : array_like
             Array of weights. Must be of the same length like X.
         color : matplotlib compatible color code, optional
@@ -201,7 +201,7 @@ class ComparisonPlotter(object):
             different livetime on each other. For this purpose only
             the relative difference between the livetimes is needed.
             So if you have datasets with the same livetime just set
-            them all to 1 respectivly use the default.
+            them all to 1 respectively use the default.
         weights : array_like
             Array of weights. Must be of the same length like X.
         color : matplotlib compatible color code, optional
@@ -240,7 +240,7 @@ class ComparisonPlotter(object):
             different livetime on each other. For this purpose only
             the relative difference between the livetimes is needed.
             So if you have datasets with the same livetime just set
-            them all to 1 respectivly use the default.
+            them all to 1 respectively use the default.
         weights : array_like
             Array of weights. Must be of the same length like X.
         color : matplotlib compatible color code, optional
@@ -287,7 +287,7 @@ class ComparisonPlotter(object):
             different livetime on each other. For this purpose only
             the relative difference between the livetimes is needed.
             So if you have datasets with the same livetime just set
-            them all to 1 respectivly use the default.
+            them all to 1 respectively use the default.
         weights : array_like
             Array of weights. Must be of the same length like X.
         color : matplotlib compatible color code, optional
@@ -309,7 +309,7 @@ class ComparisonPlotter(object):
         """Method to start the actual draw process.
 
         In a first step all CalcParts are called for each component.
-        In a second step the PlotParts are called for each compnent.
+        In a second step the PlotParts are called for each component.
 
         Parameters
         ----------
@@ -362,6 +362,82 @@ class ComparisonPlotter(object):
                           x1=x1,
                           y0=y0,
                           y1=y1)
+            row_pointer -= part_rows
+            for comp_i in self._components:
+                result_tray = part_i.execute(result_tray, comp_i)
+            ax_dict[part_i.name] = part_i.get_ax()
+            part_i.finish(result_tray)
+        logger.debug(u'Finished!')
+        return self._fig, ax_dict, result_tray
+
+    def draw_multiples(self, gridsize,
+                       x_pos, y_pos,
+                       x_label='Feature', fig=None):
+        """Method to start the actual draw process.
+
+        In a first step all CalcParts are called for each component.
+        In a second step the PlotParts are called for each component.
+
+        Parameters
+        ----------
+        gridsize : tuple
+            Size of the plot grid (Number of rows, number of columns)
+        x_pos : int
+            Column number to draw to
+        y_pos : int
+            Row number to draw to
+        x_label : str, optional
+            Label of the x-axis.
+        fig : matplotlib.Figure, optional
+            Figure instance that should be used to draw on. If no instance
+            is provided a new figure of 'figsize' is created.
+
+        Returns
+        -------
+        fig : matplotlib.Figure
+            The figure to which the plot is added
+        ax_dict : dict
+            Dictionary with all the axes created by the PlotParts.
+            The key is the name of the PlotPart. If a PlotPart creates
+            more than one axis (e.g. AggarwalRatio) a list with all
+            axes is added to the dict under the name of the part.
+
+        result_tray : comparison_plotter.base_classes.ResultTray
+            A simple object with all the results of the CalcParts as
+            the attribute.
+        """
+        logger.debug(u'Start Draw Process!')
+        logger.debug(u'===================')
+        result_tray = ResultTray()
+        result_tray.add(x_label, 'x_label')
+        result_tray = self._calc(result_tray)
+        self._fig = fig
+        result_tray.add(self._fig, 'fig')
+        total_rows = sum([part_i.get_rows() for part_i in self._plot_parts])
+        row_pointer = total_rows
+        logger.debug(u'Starting Plotting...')
+        ax_dict = {}
+        for i, part_i in enumerate(self._plot_parts):
+            part_rows = part_i.get_rows()
+
+            y1_rel = row_pointer / total_rows
+            y1_abs = (1 - (y_pos + 1) / gridsize[1]) + \
+                y1_rel / gridsize[1]
+
+            y0_rel = (row_pointer - part_rows) / total_rows
+            y0_abs = (1 - (y_pos + 1) / gridsize[1]) + \
+                y0_rel / gridsize[1]
+
+            x0 = 0. + x_pos / gridsize[0]
+            x1 = (x_pos + 1.) / gridsize[0]
+            part_i.set_ax(fig=self._fig,
+                          total_parts=len(self._plot_parts),
+                          idx=i,
+                          x0=x0-0.065,
+                          x1=x1+0.065,
+                          y0=y0_abs,
+                          y1=y1_abs,
+                          medium_offsets_only=True)
             row_pointer -= part_rows
             for comp_i in self._components:
                 result_tray = part_i.execute(result_tray, comp_i)
