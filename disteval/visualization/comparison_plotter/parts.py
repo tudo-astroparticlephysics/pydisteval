@@ -23,7 +23,7 @@ class CalcBinning(CalcPart):
         self.check_all = check_all
         self.binning_dict = binning_dict
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(CalcBinning, self).execute(result_tray, component)
         if self.binning_dict is not None:
             if not isinstance(self.binning_dict, dict):
@@ -53,7 +53,7 @@ class CalcHistogram(CalcPart):
     name = 'CalcHistogram'
     level = 1
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(CalcHistogram, self).execute(result_tray,
                                                          component)
         if not hasattr(result_tray, 'binning'):
@@ -112,7 +112,7 @@ class CalcLimitedMCHistoErrors(CalcPart):
         result_tray.add(self.alpha, 'alpha')
         return result_tray
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(CalcLimitedMCHistoErrors, self).execute(
             result_tray, component)
         if component.c_type == 'ref':
@@ -221,7 +221,7 @@ class CalcAggarwalHistoErrors(CalcPart):
         result_tray.add(self.alpha, 'alpha')
         return result_tray
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(CalcAggarwalHistoErrors, self).execute(result_tray,
                                                                    component)
         if component.c_type == 'ref':
@@ -251,7 +251,7 @@ class CalcLimitedMCRatios(CalcPart):
     name = 'CalcLimitedMCRatios'
     level = 3
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(CalcLimitedMCRatios, self).execute(
             result_tray, component)
         sum_w = result_tray.sum_w
@@ -312,7 +312,7 @@ class CalcAggarwalRatios(CalcPart):
     name = 'CalcAggarwalRatios'
     level = 3
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(CalcAggarwalRatios, self).execute(result_tray,
                                                               component)
         sum_w = result_tray.sum_w
@@ -368,7 +368,7 @@ class CalcAggarwalRatios(CalcPart):
 class CalcClassicHistoErrors(CalcPart):
     name = 'CalcClassicHistoErrors'
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(CalcClassicHistoErrors, self).execute(result_tray,
                                                                   component)
         if not hasattr(result_tray, 'sum_w'):
@@ -399,7 +399,7 @@ class CalcNormalization(CalcPart):
         super(CalcNormalization, self).__init__()
         self.normalize = normalize
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(CalcNormalization, self).execute(result_tray,
                                                              component)
         sum_w = result_tray.sum_w
@@ -437,7 +437,7 @@ class PlotHistClassic(PlotPart):
         self.ax.set_ylabel(self.y_label)
         return result_tray
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(PlotHistClassic, self).execute(result_tray,
                                                            component)
         idx = component.idx
@@ -489,7 +489,7 @@ class PlotRatioClassic(PlotPart):
         self.ax.set_ylabel(self.y_label)
         return result_tray
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         super_func = super(PlotRatioClassic, self).execute
         result_tray = super_func(result_tray, component)
         if component.c_type == 'ref':
@@ -581,7 +581,7 @@ class PlotHistAggerwal(PlotPart):
         self.ax.set_ylabel(self.y_label)
         return result_tray
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(PlotHistAggerwal, self).execute(result_tray,
                                                             component)
         y_vals = result_tray.sum_w[1:-1, component.idx]
@@ -750,16 +750,16 @@ class PlotRatioAggerwal(PlotPart):
             self.ax_upper.set_xlim([result_tray.binning[0],
                                     result_tray.binning[-1]])
 
-    def execute(self, result_tray, component):
+    def execute(self, result_tray, component, **kwargs):
         result_tray = super(PlotRatioAggerwal, self).execute(result_tray,
                                                              component)
         if component.c_type == 'test':
-            self.__execute_test__(result_tray, component)
+            self.__execute_test__(result_tray, component, **kwargs)
         elif component.c_type == 'ref':
             self.__execute_ref__(result_tray, component)
         return result_tray
 
-    def __execute_test__(self, result_tray, component):
+    def __execute_test__(self, result_tray, component, **kwargs):
         y_mins_ratio = result_tray.y_mins_ratio
         ratio_mapped = result_tray.ratio_mapped[1:-1]
         is_above = result_tray.is_above[1:-1]
@@ -790,7 +790,8 @@ class PlotRatioAggerwal(PlotPart):
             facecolor=component.color,
             edgecolor='k',
             alpha=1.,
-            annotation=annotation)
+            annotation=annotation,
+            **kwargs)
         if self.zoomed:
             ratio_zoomed = np.array(ratio_mapped)
             ratio_zoomed[~is_above] = calc_funcs.rescale_ratio(
@@ -811,7 +812,8 @@ class PlotRatioAggerwal(PlotPart):
                 facecolor=component.color,
                 edgecolor='k',
                 alpha=1.,
-                annotation='Ratio: Intervals')
+                annotation='Ratio: Intervals',
+                **kwargs)
 
     def __execute_ref__(self, result_tray, component):
         binning = result_tray.binning
@@ -876,7 +878,8 @@ class PlotRatioAggerwal(PlotPart):
                              facecolor,
                              edgecolor,
                              alpha,
-                             annotation=None):
+                             annotation=None,
+                             max_ticks_per_side=5):
         plot_funcs.plot_test_ratio_mapped(fig=fig,
                                           ax=ax,
                                           bin_edges=binning,
@@ -887,7 +890,8 @@ class PlotRatioAggerwal(PlotPart):
                                           alpha=alpha)
         M_t, M_p, m_t, m_p = plot_funcs.generate_ticks_for_aggarwal_ratio(
             y_0=1.,
-            y_min=y_min)
+            y_min=y_min,
+            max_ticks_per_side=max_ticks_per_side)
         ax.set_yticklabels(M_t)
         ax.set_yticks(M_p)
         ax.set_yticks(m_p, minor=True)

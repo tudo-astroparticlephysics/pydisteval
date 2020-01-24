@@ -305,7 +305,7 @@ class ComparisonPlotter(object):
                                           weights=weights,
                                           color=color))
 
-    def draw(self, x_label='Feature', fig=None, figsize=(10, 8)):
+    def draw(self, x_label='Feature', fig=None, figsize=(10, 8), **kwargs):
         """Method to start the actual draw process.
 
         In a first step all CalcParts are called for each component.
@@ -320,6 +320,9 @@ class ComparisonPlotter(object):
             is provided a new figure of 'figsize' is created.
         figsize : (width, height), optional
             Tuple of width and height of the figure that is created.
+        **kwargs
+            Arbitrary keyword arguments. These will be passed on to execute
+            method.
 
         Returns
         -------
@@ -364,7 +367,7 @@ class ComparisonPlotter(object):
                           y1=y1)
             row_pointer -= part_rows
             for comp_i in self._components:
-                result_tray = part_i.execute(result_tray, comp_i)
+                result_tray = part_i.execute(result_tray, comp_i, **kwargs)
             ax_dict[part_i.name] = part_i.get_ax()
             part_i.finish(result_tray)
         logger.debug(u'Finished!')
@@ -372,7 +375,11 @@ class ComparisonPlotter(object):
 
     def draw_multiples(self, gridsize,
                        x_pos, y_pos,
-                       x_label='Feature', fig=None):
+                       x0_offset=-0.065,
+                       x1_offset=0.065,
+                       x_label='Feature',
+                       fig=None,
+                       **kwargs):
         """Method to start the actual draw process.
 
         In a first step all CalcParts are called for each component.
@@ -386,11 +393,18 @@ class ComparisonPlotter(object):
             Column number to draw to
         y_pos : int
             Row number to draw to
+        x0_offset : float, optional
+            The x0 offset for the new supblot axis.
+        x1_offset : float, optional
+            The x1 offset for the new supblot axis.
         x_label : str, optional
             Label of the x-axis.
         fig : matplotlib.Figure, optional
             Figure instance that should be used to draw on. If no instance
             is provided a new figure of 'figsize' is created.
+        **kwargs
+            Arbitrary keyword arguments. These will be passed on to execute
+            method.
 
         Returns
         -------
@@ -433,14 +447,14 @@ class ComparisonPlotter(object):
             part_i.set_ax(fig=self._fig,
                           total_parts=len(self._plot_parts),
                           idx=i,
-                          x0=x0-0.065,
-                          x1=x1+0.065,
+                          x0=x0+x0_offset,
+                          x1=x1+x1_offset,
                           y0=y0_abs,
                           y1=y1_abs,
                           medium_offsets_only=True)
             row_pointer -= part_rows
             for comp_i in self._components:
-                result_tray = part_i.execute(result_tray, comp_i)
+                result_tray = part_i.execute(result_tray, comp_i, **kwargs)
             ax_dict[part_i.name] = part_i.get_ax()
             part_i.finish(result_tray)
         logger.debug(u'Finished!')
