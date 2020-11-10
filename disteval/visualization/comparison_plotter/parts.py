@@ -679,17 +679,21 @@ class PlotRatioAggerwal(PlotPart):
     rows = 2
     zoom = -5
 
-    def __init__(self, zoomed, y_label):
+    def __init__(self, zoomed, y_label, y_min_log_prob=None):
         super(PlotRatioAggerwal, self).__init__()
         self.zoomed = zoomed
         self.y_label = y_label
+        self.y_min_log_prob = y_min_log_prob
         if zoomed:
             self.rows = 3
 
     def start(self, result_tray):
         y_min_limit = np.min(result_tray.y_mins_limit)
         y_min_ratio = np.min(result_tray.y_mins_ratio)
-        self.y_min = min(y_min_limit, y_min_ratio)
+        if self.y_min_log_prob is None:
+            self.y_min = min(y_min_limit, y_min_ratio)
+        else:
+            self.y_min = self.y_min_log_prob
 
     def set_ax(self, fig, total_parts, idx, x0, x1, y0, y1,
                medium_offsets_only=False):

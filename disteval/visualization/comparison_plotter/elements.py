@@ -108,7 +108,8 @@ class AggarwalRatio(Element):
                  y_label='p-value*',
                  alpha=[0.68, 0.9, 0.99],
                  zoomed=True,
-                 binning_dict=None):
+                 binning_dict=None,
+                 y_min_log_prob=None):
         super(AggarwalRatio, self).__init__()
         self.calc_components.append(parts.CalcBinning(
             n_bins=n_bins,
@@ -116,8 +117,8 @@ class AggarwalRatio(Element):
         self.calc_components.append(parts.CalcHistogram())
         self.calc_components.append(parts.CalcAggarwalHistoErrors(alpha))
         self.calc_components.append(parts.CalcAggarwalRatios())
-        self.plot_components.append(parts.PlotRatioAggerwal(zoomed=zoomed,
-                                                            y_label=y_label))
+        self.plot_components.append(parts.PlotRatioAggerwal(
+            zoomed=zoomed, y_label=y_label, y_min_log_prob=y_min_log_prob))
 
 
 class LimitedMCRatio(Element):
@@ -129,7 +130,8 @@ class LimitedMCRatio(Element):
                  alpha=[0.68, 0.9, 0.99],
                  zoomed=True,
                  binning_dict=None,
-                 likelihood='SAY'):
+                 likelihood='SAY',
+                 y_min_log_prob=None):
         super(LimitedMCRatio, self).__init__()
         self.calc_components.append(parts.CalcBinning(
             n_bins=n_bins,
@@ -138,8 +140,8 @@ class LimitedMCRatio(Element):
         self.calc_components.append(parts.CalcLimitedMCHistoErrors(alpha,
                                                                    likelihood))
         self.calc_components.append(parts.CalcLimitedMCRatios())
-        self.plot_components.append(parts.PlotRatioAggerwal(zoomed=zoomed,
-                                                            y_label=y_label))
+        self.plot_components.append(parts.PlotRatioAggerwal(
+            zoomed=zoomed, y_label=y_label, y_min_log_prob=y_min_log_prob))
 
 
 class Normalization(Element):
