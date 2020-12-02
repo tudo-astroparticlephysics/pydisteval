@@ -303,6 +303,7 @@ class CalcLimitedMCRatios(CalcPart):
                 upper=True)
 
             result_tray.add([y_below, y_upper], 'y_mins_ratio')
+            result_tray.add(ratio, 'ratio')
             result_tray.add(ratio_mapped, 'ratio_mapped')
             result_tray.add(upper, 'is_above')
         return result_tray
@@ -360,6 +361,7 @@ class CalcAggarwalRatios(CalcPart):
                 upper=True)
 
             result_tray.add([y_below, y_upper], 'y_mins_ratio')
+            result_tray.add(ratio, 'ratio')
             result_tray.add(ratio_mapped, 'ratio_mapped')
             result_tray.add(upper, 'is_above')
         return result_tray
