@@ -15,7 +15,7 @@ before_install:
 
 install:
   - conda update --yes conda
-  - conda install --yes python=$CONDA atlas numpy scipy matplotlib pip pymongo pyflakes pytest setuptools
+  - conda install --yes python=$CONDA numpy scipy matplotlib pip pymongo pyflakes pytest setuptools
   - pip install .
 
 script:
