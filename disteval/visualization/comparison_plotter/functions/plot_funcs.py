@@ -322,7 +322,7 @@ def plot_test_ratio_mapped(fig,
 
 
 def generate_ticks_for_aggarwal_ratio(y_0, y_min, max_ticks_per_side=5):
-    y_min = np.floor(y_min)
+    y_min_floored = np.floor(y_min)
     y_0_log = np.log10(y_0)
 
     tick_pos = []
@@ -332,7 +332,7 @@ def generate_ticks_for_aggarwal_ratio(y_0, y_min, max_ticks_per_side=5):
     if y_0_log != np.floor(y_0_log):
         tick_pos.append(np.floor(y_0_log))
         n_ticks += 2
-    while tick_pos[-1] > y_min:
+    while tick_pos[-1] > y_min_floored:
         tick_pos.append(tick_pos[-1] - 1)
         n_ticks += 2
     n_ticks_per_side = (n_ticks - 1) / 2
