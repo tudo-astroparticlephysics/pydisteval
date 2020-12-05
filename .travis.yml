@@ -23,4 +23,4 @@ install:
 
 script:
   - pyflakes disteval
-  - xvfb-run python setup.py test
+  - xvfb-run -a python setup.py test
