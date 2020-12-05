@@ -652,10 +652,7 @@ def calc_p_alpha_ratio(mu, k):
         is_nan = np.logical_or(np.isnan(k[mask]), np.isnan(mu[mask]))
         is_zero_mu = mu[mask] == 0.
         only_zero_mu = np.logical_and(is_zero_mu, ~is_nan)
-        if upper:
-            returned_vals[only_zero_mu] = -np.inf
-        else:
-            returned_vals[only_zero_mu] = -np.inf
+        returned_vals[only_zero_mu] = -np.inf
         ratio[mask] = returned_vals
     return ratio
 
@@ -713,9 +710,6 @@ def calc_p_alpha_ratio_pdf(pdfs, ks, mu, k):
         is_nan = np.logical_or(np.isnan(k[mask]), np.isnan(mu[mask]))
         is_zero_mu = mu[mask] == 0.
         only_zero_mu = np.logical_and(is_zero_mu, ~is_nan)
-        if upper:
-            returned_vals[only_zero_mu] = -np.inf
-        else:
-            returned_vals[only_zero_mu] = -np.inf
+        returned_vals[only_zero_mu] = -np.inf
         ratio[mask] = returned_vals
     return ratio
