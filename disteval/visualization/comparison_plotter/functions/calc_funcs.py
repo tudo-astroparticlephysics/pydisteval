@@ -415,7 +415,6 @@ def calc_p_alpha_limits(mu, rel_std):
         returned_vals = __calc_p_alpha__(mu, abs_std, upper=True)
         is_nan = np.logical_or(np.isnan(abs_std), np.isnan(mu))
         is_zero_mu = mu == 0.
-        is_zero_k = abs_std == 0.
         only_zero_mu = np.logical_and(is_zero_mu, ~is_nan)
 
         returned_vals[only_zero_mu] = -np.inf
