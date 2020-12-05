@@ -1,5 +1,8 @@
 language: python
 
+services:
+  - xvfb
+
 matrix:
   include:
     - os: linux
@@ -20,4 +23,4 @@ install:
 
 script:
   - pyflakes disteval
-  - python setup.py test
+  - xvfb-run python setup.py test
