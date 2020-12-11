@@ -406,32 +406,18 @@ def calc_p_alpha_limits(mu, rel_std):
 
         is_nan = np.logical_or(np.isnan(abs_std), np.isnan(mu))
         is_zero_mu = mu == 0.
-        is_zero_k = abs_std == 0.
-        only_zero_mu = np.logical_and(np.logical_and(~is_zero_k, is_zero_mu),
-                                      ~is_nan)
-        only_zero_k = np.logical_and(np.logical_and(is_zero_k, ~is_zero_mu),
-                                     ~is_nan)
-        both_zero = np.logical_and(is_zero_k, is_zero_mu)
+        only_zero_mu = np.logical_and(is_zero_mu, ~is_nan)
 
-        returned_vals[both_zero] = np.nan
         returned_vals[only_zero_mu] = -np.inf
-        returned_vals[only_zero_k] = np.inf
         limits[:, i, 0] = returned_vals
     for i in range(rel_std.shape[1]):
         abs_std = mu * rel_std[:, i, 1]
         returned_vals = __calc_p_alpha__(mu, abs_std, upper=True)
         is_nan = np.logical_or(np.isnan(abs_std), np.isnan(mu))
         is_zero_mu = mu == 0.
-        is_zero_k = abs_std == 0.
-        only_zero_mu = np.logical_and(np.logical_and(~is_zero_k, is_zero_mu),
-                                      ~is_nan)
-        only_zero_k = np.logical_and(np.logical_and(is_zero_k, ~is_zero_mu),
-                                     ~is_nan)
-        both_zero = np.logical_and(is_zero_k, is_zero_mu)
+        only_zero_mu = np.logical_and(is_zero_mu, ~is_nan)
 
-        returned_vals[both_zero] = np.nan
         returned_vals[only_zero_mu] = -np.inf
-        returned_vals[only_zero_k] = np.inf
         limits[:, i, 1] = returned_vals
     return limits
 
@@ -486,16 +472,9 @@ def calc_p_alpha_limits_pdf(pdfs, ks, mu, rel_std):
 
         is_nan = np.logical_or(np.isnan(abs_std), np.isnan(mu))
         is_zero_mu = mu == 0.
-        is_zero_k = abs_std == 0.
-        only_zero_mu = np.logical_and(np.logical_and(~is_zero_k, is_zero_mu),
-                                      ~is_nan)
-        only_zero_k = np.logical_and(np.logical_and(is_zero_k, ~is_zero_mu),
-                                     ~is_nan)
-        both_zero = np.logical_and(is_zero_k, is_zero_mu)
+        only_zero_mu = np.logical_and(is_zero_mu, ~is_nan)
 
-        returned_vals[both_zero] = np.nan
         returned_vals[only_zero_mu] = -np.inf
-        returned_vals[only_zero_k] = np.inf
         limits[:, i, 0] = returned_vals
     for i in range(rel_std.shape[1]):
         abs_std = mu * rel_std[:, i, 1]
@@ -504,16 +483,9 @@ def calc_p_alpha_limits_pdf(pdfs, ks, mu, rel_std):
                                              upper=True)
         is_nan = np.logical_or(np.isnan(abs_std), np.isnan(mu))
         is_zero_mu = mu == 0.
-        is_zero_k = abs_std == 0.
-        only_zero_mu = np.logical_and(np.logical_and(~is_zero_k, is_zero_mu),
-                                      ~is_nan)
-        only_zero_k = np.logical_and(np.logical_and(is_zero_k, ~is_zero_mu),
-                                     ~is_nan)
-        both_zero = np.logical_and(is_zero_k, is_zero_mu)
+        only_zero_mu = np.logical_and(is_zero_mu, ~is_nan)
 
-        returned_vals[both_zero] = np.nan
         returned_vals[only_zero_mu] = -np.inf
-        returned_vals[only_zero_k] = np.inf
         limits[:, i, 1] = returned_vals
     return limits
 
@@ -546,11 +518,9 @@ def __calc_p_alpha__(mu, k, upper=True):
     """
     assert mu.shape == k.shape, 'Shape of \'mu\' and \'k\' have to be the same'
     limit = np.copy(k)
-    is_zero_mu = mu == 0.
-    is_zero_k = k == 0.
 
     is_nan = np.logical_or(np.isnan(k), np.isnan(mu))
-    is_finite = np.logical_and(~is_zero_k, ~is_zero_mu)
+    is_finite = mu != 0.
 
     a_ref = sc_dist.poisson.cdf(mu[is_finite], mu[is_finite])
     a_k = sc_dist.poisson.cdf(k[is_finite], mu[is_finite])
@@ -606,11 +576,9 @@ def __calc_p_alpha_pdf__(pdfs, ks, mu, k, upper=True):
     """
     assert mu.shape == k.shape, 'Shape of \'mu\' and \'k\' have to be the same'
     limit = np.copy(k)
-    is_zero_mu = mu == 0.
-    is_zero_k = k == 0.
 
     is_nan = np.logical_or(np.isnan(k), np.isnan(mu))
-    is_finite = np.logical_and(~is_zero_k, ~is_zero_mu)
+    is_finite = mu != 0.
 
     for i, (pdf, ksi) in enumerate(zip(pdfs, ks)):
         cdf = np.cumsum(pdf)
@@ -682,20 +650,8 @@ def calc_p_alpha_ratio(mu, k):
                                          upper=upper)
         is_nan = np.logical_or(np.isnan(k[mask]), np.isnan(mu[mask]))
         is_zero_mu = mu[mask] == 0.
-        is_zero_k = k[mask] == 0.
-        only_zero_mu = np.logical_and(np.logical_and(~is_zero_k, is_zero_mu),
-                                      ~is_nan)
-        only_zero_k = np.logical_and(np.logical_and(is_zero_k, ~is_zero_mu),
-                                     ~is_nan)
-        both_zero = np.logical_and(is_zero_k, is_zero_mu)
-        if upper:
-            returned_vals[both_zero] = np.nan
-            returned_vals[only_zero_mu] = -np.inf
-            returned_vals[only_zero_k] = np.inf
-        else:
-            returned_vals[both_zero] = np.nan
-            returned_vals[only_zero_mu] = -np.inf
-            returned_vals[only_zero_k] = np.inf
+        only_zero_mu = np.logical_and(is_zero_mu, ~is_nan)
+        returned_vals[only_zero_mu] = -np.inf
         ratio[mask] = returned_vals
     return ratio
 
@@ -752,19 +708,7 @@ def calc_p_alpha_ratio_pdf(pdfs, ks, mu, k):
                                              upper=upper)
         is_nan = np.logical_or(np.isnan(k[mask]), np.isnan(mu[mask]))
         is_zero_mu = mu[mask] == 0.
-        is_zero_k = k[mask] == 0.
-        only_zero_mu = np.logical_and(np.logical_and(~is_zero_k, is_zero_mu),
-                                      ~is_nan)
-        only_zero_k = np.logical_and(np.logical_and(is_zero_k, ~is_zero_mu),
-                                     ~is_nan)
-        both_zero = np.logical_and(is_zero_k, is_zero_mu)
-        if upper:
-            returned_vals[both_zero] = np.nan
-            returned_vals[only_zero_mu] = -np.inf
-            returned_vals[only_zero_k] = np.inf
-        else:
-            returned_vals[both_zero] = np.nan
-            returned_vals[only_zero_mu] = -np.inf
-            returned_vals[only_zero_k] = np.inf
+        only_zero_mu = np.logical_and(is_zero_mu, ~is_nan)
+        returned_vals[only_zero_mu] = -np.inf
         ratio[mask] = returned_vals
     return ratio
