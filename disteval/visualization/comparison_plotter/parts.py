@@ -435,7 +435,7 @@ class PlotHistClassic(PlotPart):
     def start(self, result_tray):
         result_tray = super(PlotHistClassic, self).start(result_tray)
         if self.log_y:
-            self.ax.set_yscale('log', nonposy='clip')
+            self.ax.set_yscale('log', nonpositive='clip')
         self.ax.set_ylabel(self.y_label)
         return result_tray
 
@@ -579,7 +579,7 @@ class PlotHistAggerwal(PlotPart):
     def start(self, result_tray):
         result_tray = super(PlotHistAggerwal, self).start(result_tray)
         if self.log_y:
-            self.ax.set_yscale('log', nonposy='clip')
+            self.ax.set_yscale('log', nonpositive='clip')
         self.ax.set_ylabel(self.y_label)
         return result_tray
 
